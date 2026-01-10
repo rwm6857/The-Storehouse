@@ -9,6 +9,7 @@ const {
   setCurrencyLabels,
   ensureTalentsRow
 } = require('../db');
+const { normalizeRarity } = require('../lib/rarity');
 
 function nowIso() {
   return new Date().toISOString();
@@ -174,6 +175,24 @@ function adminRoutes({ verifyPasscode }) {
     res.redirect(`/admin/students/${studentId}`);
   });
 
+  router.post('/students/:id/delete', requireAdmin, (req, res) => {
+    const studentId = Number.parseInt(req.params.id, 10);
+    const student = db.prepare('SELECT id FROM students WHERE id = ?').get(studentId);
+    if (!student) {
+      return res.status(404).render('pages/not-found');
+    }
+
+    const deleteStudent = db.transaction((id) => {
+      db.prepare('DELETE FROM transactions WHERE student_id = ?').run(id);
+      db.prepare('DELETE FROM talents_ledger WHERE student_id = ?').run(id);
+      db.prepare('DELETE FROM students WHERE id = ?').run(id);
+    });
+
+    deleteStudent(studentId);
+
+    res.redirect('/admin/students');
+  });
+
   router.post('/students/:id/regenerate', requireAdmin, (req, res) => {
     const studentId = Number.parseInt(req.params.id, 10);
     const newQrId = makeQrId();
@@ -282,6 +301,7 @@ function adminRoutes({ verifyPasscode }) {
     const active = req.body.active === 'on' ? 1 : 0;
     const sortOrder = Number.parseInt(req.body.sort_order, 10) || 0;
     const inventory = Number.parseInt(req.body.inventory, 10);
+    const rarity = normalizeRarity(req.body.rarity);
 
     if (!name || !Number.isFinite(price) || price < 0 || !Number.isFinite(inventory) || inventory < 0) {
       const items = db.prepare('SELECT * FROM items ORDER BY sort_order ASC, name COLLATE NOCASE ASC').all();
@@ -292,9 +312,9 @@ function adminRoutes({ verifyPasscode }) {
     }
 
     db.prepare(`
-      INSERT INTO items (name, price_shekels, inventory, active, sort_order, category, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(name, price, inventory, active, sortOrder, category || 'snack', nowIso());
+      INSERT INTO items (name, price_shekels, inventory, active, sort_order, category, rarity, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(name, price, inventory, active, sortOrder, category || 'snack', rarity, nowIso());
 
     res.redirect('/admin/items');
   });
@@ -316,19 +336,29 @@ function adminRoutes({ verifyPasscode }) {
     const active = req.body.active === 'on' ? 1 : 0;
     const sortOrder = Number.parseInt(req.body.sort_order, 10) || 0;
     const inventory = Number.parseInt(req.body.inventory, 10);
+    const rarity = normalizeRarity(req.body.rarity);
 
     if (!name || !Number.isFinite(price) || price < 0 || !Number.isFinite(inventory) || inventory < 0) {
       return res.status(400).render('pages/admin/item-edit', {
-        item: { id: itemId, name, price_shekels: price, inventory, category, active, sort_order: sortOrder },
+        item: {
+          id: itemId,
+          name,
+          price_shekels: price,
+          inventory,
+          category,
+          rarity,
+          active,
+          sort_order: sortOrder
+        },
         error: 'Name, non-negative price, and non-negative inventory are required.'
       });
     }
 
     db.prepare(`
       UPDATE items
-      SET name = ?, price_shekels = ?, inventory = ?, category = ?, active = ?, sort_order = ?
+      SET name = ?, price_shekels = ?, inventory = ?, category = ?, rarity = ?, active = ?, sort_order = ?
       WHERE id = ?
-    `).run(name, price, inventory, category || 'snack', active, sortOrder, itemId);
+    `).run(name, price, inventory, category || 'snack', rarity, active, sortOrder, itemId);
 
     res.redirect('/admin/items');
   });

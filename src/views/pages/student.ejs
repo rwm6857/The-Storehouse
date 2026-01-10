@@ -8,14 +8,14 @@
     <div class="balance-card">
       <div class="balance-line">
         <span class="label"><%= labels.shekels_label %></span>
-        <span class="value"><%= student.balance %></span>
+        <span class="value"><%= student.balance %><%= currencySymbols.shekels %></span>
       </div>
       <div class="balance-line">
         <span class="label"><%= labels.talents_label %></span>
-        <span class="value"><%= student.talents %></span>
+        <span class="value"><%= currencySymbols.talents %><%= student.talents %></span>
       </div>
       <div class="balance-note">
-        <%= economy.shekels_per_talent %> <%= labels.shekels_label %> = 1 <%= labels.talents_label %>
+        <%= economy.shekels_per_talent %><%= currencySymbols.shekels %> <%= labels.shekels_label %> = <%= currencySymbols.talents %>1 <%= labels.talents_label %>
       </div>
     </div>
   </div>
@@ -47,15 +47,71 @@
   <% } %>
   <div class="item-grid">
     <% items.forEach((item) => { %>
-      <div class="item-card">
-        <div>
-          <h4><%= item.name %></h4>
-          <p class="muted"><%= item.category %> • Cost: ₪<%= item.price_shekels %></p>
+      <% const rarity = item.rarity || 'common'; %>
+      <% const isCommon = rarity === 'common'; %>
+      <% const canBuy = Boolean(item.canBuy); %>
+      <% const soldOut = Boolean(item.soldOut); %>
+      <% const costText = `${item.price_shekels}${currencySymbols.shekels}`; %>
+      <div
+        class="item-card shop-card rarity-<%= rarity %><%= isCommon ? '' : ' has-rarity' %><%= canBuy ? ' is-clickable' : ' is-disabled' %>"
+        role="button"
+        tabindex="0"
+        aria-label="Buy <%= item.name %>"
+        aria-disabled="<%= canBuy ? 'false' : 'true' %>"
+        data-can-buy="<%= canBuy ? 'true' : 'false' %>"
+        data-form-id="buy-form-<%= item.id %>"
+        <% if (item.rarityTokens) { %>
+          style="--rarity-spine-from: <%= item.rarityTokens.spineFrom %>; --rarity-spine-to: <%= item.rarityTokens.spineTo %>; --rarity-border: <%= item.rarityTokens.border %>; --rarity-border-soft: <%= item.rarityBorderSoft %>; --rarity-glow: <%= item.rarityTokens.glow %>;"
+        <% } %>
+      >
+        <% if (!isCommon) { %>
+          <span class="rarity-spine" aria-hidden="true"></span>
+          <span class="item-cost-chip"><%= costText %></span>
+          <span class="rarity-crest rarity-<%= rarity %>" aria-hidden="true">
+            <% if (rarity === 'uncommon') { %>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3c4 0 7 3 7 7 0 6-7 11-7 11S5 16 5 10c0-4 3-7 7-7z"></path>
+                <path d="M12 7c-1.8 1.7-2.5 4.1-2.4 6.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+              </svg>
+            <% } else if (rarity === 'rare') { %>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3l7 7-7 11L5 10l7-7z"></path>
+              </svg>
+            <% } else { %>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 8l4 3 4-6 4 6 4-3v9H4V8z"></path>
+                <path d="M4 17h16v2H4z"></path>
+              </svg>
+            <% } %>
+          </span>
+        <% } %>
+        <div class="item-card-content">
+          <div class="item-text">
+            <div class="item-title">
+              <h4><%= item.name %></h4>
+              <% if (!isCommon) { %>
+                <span class="rarity-label"><%= rarity.replace(/^\w/, (c) => c.toUpperCase()) %></span>
+              <% } %>
+            </div>
+            <% if (isCommon) { %>
+              <p class="muted"><%= item.category %> • Cost: <%= costText %></p>
+            <% } else { %>
+              <div class="item-meta-row">
+                <span class="muted"><%= item.category %></span>
+              </div>
+            <% } %>
+          </div>
+          <form method="post" action="/s/<%= student.qr_id %>/buy" id="buy-form-<%= item.id %>" class="buy-form">
+            <input type="hidden" name="item_id" value="<%= item.id %>" />
+            <button class="button buy-button<%= isCommon ? '' : ' rarity-accent' %>" type="submit" <%= canBuy ? '' : 'disabled' %>>
+              <% if (!canBuy) { %>
+                <%= soldOut ? 'Sold out' : `Not enough ${currencySymbols.shekels}` %>
+              <% } else { %>
+                Buy • <%= costText %>
+              <% } %>
+            </button>
+          </form>
         </div>
-        <form method="post" action="/s/<%= student.qr_id %>/buy">
-          <input type="hidden" name="item_id" value="<%= item.id %>" />
-          <button class="button" type="submit">Buy</button>
-        </form>
       </div>
     <% }) %>
   </div>
@@ -71,7 +127,7 @@
         <li>
           <span class="activity-time"><%= tx.created_at.replace('T', ' ').slice(0, 16) %></span>
           <span class="activity-reason"><%= tx.reason || tx.type %></span>
-          <span class="activity-amount"><%= tx.amount_shekels %></span>
+          <span class="activity-amount"><%= tx.amount_shekels %><%= currencySymbols.shekels %></span>
         </li>
       <% }) %>
     </ul>
@@ -96,11 +152,77 @@
 
       <form method="post" action="/admin/students/<%= student.id %>/convert" class="inline-form">
         <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
-        <button class="button" type="submit">Convert <%= economy.shekels_per_talent %> <%= labels.shekels_label %> to 1 <%= labels.talents_label %></button>
+        <button class="button" type="submit">Convert <%= economy.shekels_per_talent %><%= currencySymbols.shekels %> <%= labels.shekels_label %> to <%= currencySymbols.talents %>1 <%= labels.talents_label %></button>
       </form>
     </div>
-    <a class="button" href="/admin/students/<%= student.id %>/edit">Edit Student</a>
+    <a class="button icon-button" href="/admin/students/<%= student.id %>/edit" aria-label="Edit student" title="Edit student">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25z"></path>
+        <path d="M20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.13z"></path>
+      </svg>
+    </a>
   </section>
 <% } %>
+
+<div class="toast" id="shopToast" role="status" aria-live="polite"></div>
+<script>
+  const shopCards = document.querySelectorAll('.shop-card');
+  const triggerPurchase = (form) => {
+    if (!form) return;
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      form.submit();
+    }
+  };
+
+  shopCards.forEach((card) => {
+    const formId = card.dataset.formId;
+    const canBuy = card.dataset.canBuy === 'true';
+    const form = document.getElementById(formId);
+    const button = form ? form.querySelector('button') : null;
+
+    card.addEventListener('click', (event) => {
+      if (!canBuy) return;
+      if (event.target.closest('button')) return;
+      triggerPurchase(form);
+    });
+
+    card.addEventListener('keydown', (event) => {
+      if (!canBuy) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        triggerPurchase(form);
+      }
+    });
+
+    if (button) {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (!canBuy) {
+          event.preventDefault();
+          return;
+        }
+        event.preventDefault();
+        triggerPurchase(form);
+      });
+    }
+  });
+
+  const purchaseNotice = <%- JSON.stringify(purchaseNotice || null) %>;
+  if (purchaseNotice) {
+    const toast = document.getElementById('shopToast');
+    if (toast) {
+      toast.textContent = `Purchased ${purchaseNotice.name} (${purchaseNotice.price}<%= currencySymbols.shekels %>)`;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+    if (window.history && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('purchased');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }
+</script>
 
 <%- include('../partials/footer') %>

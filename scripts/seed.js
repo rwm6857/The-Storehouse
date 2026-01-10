@@ -23,11 +23,11 @@ const demoStudents = [
 ];
 
 const demoItems = [
-  { name: 'Granola Bar', price: 3, category: 'snack', sort: 1, inventory: 24 },
-  { name: 'Fruit Snacks', price: 2, category: 'snack', sort: 2, inventory: 30 },
-  { name: 'Chocolate Chip Cookie', price: 4, category: 'snack', sort: 3, inventory: 18 },
-  { name: 'Sticker Pack', price: 6, category: 'trinket', sort: 4, inventory: 12 },
-  { name: 'Soda Can', price: 5, category: 'snack', sort: 5, inventory: 20 }
+  { name: 'Granola Bar', price: 3, category: 'snack', sort: 1, inventory: 24, rarity: 'common' },
+  { name: 'Fruit Snacks', price: 2, category: 'snack', sort: 2, inventory: 30, rarity: 'uncommon' },
+  { name: 'Chocolate Chip Cookie', price: 4, category: 'snack', sort: 3, inventory: 18, rarity: 'rare' },
+  { name: 'Sticker Pack', price: 6, category: 'trinket', sort: 4, inventory: 12, rarity: 'rare' },
+  { name: 'Soda Can', price: 5, category: 'snack', sort: 5, inventory: 20, rarity: 'legendary' }
 ];
 
 const insertStudent = db.prepare(`
@@ -36,8 +36,8 @@ const insertStudent = db.prepare(`
 `);
 
 const insertItem = db.prepare(`
-  INSERT INTO items (name, price_shekels, inventory, active, sort_order, category, created_at)
-  VALUES (?, ?, ?, 1, ?, ?, ?)
+  INSERT INTO items (name, price_shekels, inventory, active, sort_order, category, rarity, created_at)
+  VALUES (?, ?, ?, 1, ?, ?, ?, ?)
 `);
 
 const insertTransaction = db.prepare(`
@@ -63,7 +63,7 @@ const studentIds = demoStudents.map((name) => {
 });
 
 for (const item of demoItems) {
-  insertItem.run(item.name, item.price, item.inventory, item.sort, item.category, createdAt);
+  insertItem.run(item.name, item.price, item.inventory, item.sort, item.category, item.rarity, createdAt);
 }
 
 studentIds.forEach((id, index) => {

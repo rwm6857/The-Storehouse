@@ -1,6 +1,7 @@
 const express = require('express');
 const QRCode = require('qrcode');
 const { db, getEconomySettings, ensureTalentsRow } = require('../db');
+const { normalizeRarity, getRarityTokens, hexToRgba } = require('../lib/rarity');
 
 function nowIso() {
   return new Date().toISOString();
@@ -69,14 +70,45 @@ function publicRoutes() {
     ensureTalentsRow(student.id);
 
     const economy = getEconomySettings();
-    const items = activeItemsStmt.all();
+    const rawItems = activeItemsStmt.all();
     const transactions = recentTransactionsStmt.all(student.id);
+    const items = rawItems.map((item) => {
+      const rarity = normalizeRarity(item.rarity);
+      const rarityTokens = getRarityTokens(rarity);
+      const rarityBorderSoft = rarityTokens ? hexToRgba(rarityTokens.border, 0.25) : null;
+      const price = Number.parseInt(item.price_shekels, 10) || 0;
+      const canAfford = student.balance >= price;
+      const soldOut = item.inventory <= 0;
+      const canBuy = canAfford && !soldOut;
+      return {
+        ...item,
+        rarity,
+        rarityTokens,
+        rarityBorderSoft,
+        canAfford,
+        soldOut,
+        canBuy
+      };
+    });
+
+    const purchasedId = Number.parseInt(req.query.purchased, 10);
+    let purchaseNotice = null;
+    if (Number.isFinite(purchasedId)) {
+      const purchasedItem = db.prepare('SELECT name, price_shekels FROM items WHERE id = ?').get(purchasedId);
+      if (purchasedItem) {
+        purchaseNotice = {
+          name: purchasedItem.name,
+          price: purchasedItem.price_shekels
+        };
+      }
+    }
 
     return res.render('pages/student', {
       student,
       economy,
       items,
-      transactions
+      transactions,
+      purchaseNotice
     });
   });
 
@@ -145,6 +177,14 @@ function publicRoutes() {
       if (item.inventory <= 0) {
         return { error: 'Item is out of stock.' };
       }
+      const balanceRow = db.prepare(`
+        SELECT COALESCE(SUM(amount_shekels), 0) AS balance
+        FROM transactions
+        WHERE student_id = ?
+      `).get(student.id);
+      if (balanceRow.balance < item.price_shekels) {
+        return { error: 'Not enough Shekels.' };
+      }
 
       db.prepare('UPDATE items SET inventory = inventory - 1 WHERE id = ?').run(itemId);
       const amount = -Math.abs(Number.parseInt(item.price_shekels, 10));
@@ -157,7 +197,7 @@ function publicRoutes() {
       return res.status(400).render('pages/error', { message: result.error });
     }
 
-    return res.redirect(`/s/${student.qr_id}`);
+    return res.redirect(`/s/${student.qr_id}?purchased=${itemId}`);
   });
 
   router.get('/qr/:qr_id.png', async (req, res) => {
