@@ -56,14 +56,14 @@ Recommended example:
 ```
 PORT=3000
 HOST=0.0.0.0
-DATABASE_PATH=C:\\storehouse-data\\storehouse.sqlite
+DATABASE_PATH=C:\storehouse-data\storehouse.sqlite
 ADMIN_PASSCODE=change-me
 ```
 
 7. Create the database folder if it does not exist:
 
 ```powershell
-mkdir C:\\storehouse-data
+mkdir C:\storehouse-data
 ```
 
 8. Start the app:
