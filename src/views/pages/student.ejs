@@ -1,0 +1,106 @@
+<%- include('../partials/header') %>
+<section class="panel student-panel">
+  <div class="student-header">
+    <div>
+      <h2><%= student.name %></h2>
+      <p class="muted">QR ID: <%= student.qr_id %></p>
+    </div>
+    <div class="balance-card">
+      <div class="balance-line">
+        <span class="label"><%= labels.shekels_label %></span>
+        <span class="value"><%= student.balance %></span>
+      </div>
+      <div class="balance-line">
+        <span class="label"><%= labels.talents_label %></span>
+        <span class="value"><%= student.talents %></span>
+      </div>
+      <div class="balance-note">
+        <%= economy.shekels_per_talent %> <%= labels.shekels_label %> = 1 <%= labels.talents_label %>
+      </div>
+    </div>
+  </div>
+
+  <div class="earn-grid">
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="attendance" />
+      <button class="button big" type="submit">+ Attendance (<%= economy.attendance_shekels %>)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="participation" />
+      <button class="button big" type="submit">+ Participation (<%= economy.participation_shekels %>)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="memory" />
+      <button class="button big" type="submit">+ Memory Verse (<%= economy.memory_verse_shekels %>)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="bonus" />
+      <button class="button big" type="submit">🎲 Bonus</button>
+    </form>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>Spend <%= labels.shekels_label %></h3>
+  <% if (items.length === 0) { %>
+    <p class="muted">No active items yet.</p>
+  <% } %>
+  <div class="item-grid">
+    <% items.forEach((item) => { %>
+      <div class="item-card">
+        <div>
+          <h4><%= item.name %></h4>
+          <p class="muted"><%= item.category %> • Cost: ₪<%= item.price_shekels %></p>
+        </div>
+        <form method="post" action="/s/<%= student.qr_id %>/buy">
+          <input type="hidden" name="item_id" value="<%= item.id %>" />
+          <button class="button" type="submit">Buy</button>
+        </form>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>Recent Activity</h3>
+  <% if (transactions.length === 0) { %>
+    <p class="muted">No activity yet.</p>
+  <% } else { %>
+    <ul class="activity-list">
+      <% transactions.forEach((tx) => { %>
+        <li>
+          <span class="activity-time"><%= tx.created_at.replace('T', ' ').slice(0, 16) %></span>
+          <span class="activity-reason"><%= tx.reason || tx.type %></span>
+          <span class="activity-amount"><%= tx.amount_shekels %></span>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<% if (isAdmin) { %>
+  <section class="panel admin-panel">
+    <h3>Admin Controls</h3>
+    <div class="admin-actions">
+      <form method="post" action="/admin/students/<%= student.id %>/adjust" class="inline-form">
+        <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+        <input type="number" name="amount" class="text-input" placeholder="Amount" required />
+        <input type="text" name="reason" class="text-input" placeholder="Reason" required />
+        <button class="button" type="submit">Manual Adjust</button>
+      </form>
+
+      <form method="post" action="/admin/students/<%= student.id %>/undo" class="inline-form">
+        <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+        <button class="button" type="submit">Undo Last Transaction</button>
+      </form>
+
+      <form method="post" action="/admin/students/<%= student.id %>/convert" class="inline-form">
+        <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+        <button class="button" type="submit">Convert <%= economy.shekels_per_talent %> <%= labels.shekels_label %> to 1 <%= labels.talents_label %></button>
+      </form>
+    </div>
+    <a class="button" href="/admin/students/<%= student.id %>/edit">Edit Student</a>
+  </section>
+<% } %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,16 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <h2>Leader Login</h2>
+  <p>Enter the leader passcode to continue.</p>
+  <% if (error) { %>
+    <div class="notice error"><%= error %></div>
+  <% } %>
+  <form method="post" action="/admin/login" class="form-stack">
+    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+    <label class="form-label">Passcode
+      <input type="password" name="passcode" class="text-input" required />
+    </label>
+    <button class="button" type="submit">Log in</button>
+  </form>
+</section>
+<%- include('../../partials/footer') %>

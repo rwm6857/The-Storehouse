@@ -1,0 +1,72 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <div class="panel-header">
+    <h2>Items</h2>
+  </div>
+  <% if (error) { %>
+    <div class="notice error"><%= error %></div>
+  <% } %>
+  <form method="post" action="/admin/items" class="form-grid">
+    <label class="form-label">Name
+      <input type="text" name="name" class="text-input" required />
+    </label>
+    <label class="form-label">Cost (₪)
+      <input type="number" name="price_shekels" class="text-input" min="0" required />
+    </label>
+    <label class="form-label">Stock
+      <input type="number" name="inventory" class="text-input" min="0" value="0" required />
+    </label>
+    <label class="form-label">Category
+      <input type="text" name="category" class="text-input" value="snack" />
+    </label>
+    <label class="form-label">Sort Order
+      <input type="number" name="sort_order" class="text-input" value="0" />
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="active" checked /> Active
+    </label>
+    <button class="button" type="submit">Add Item</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h3>All Items</h3>
+  <% if (items.length === 0) { %>
+    <p class="muted">No items yet.</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th class="col-cost">Cost (₪)</th>
+            <th class="col-stock">Stock</th>
+            <th>Status</th>
+            <th>Order</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% items.forEach((item) => { %>
+            <tr>
+              <td><%= item.name %></td>
+              <td><%= item.category %></td>
+              <td class="col-cost">₪<%= item.price_shekels %></td>
+              <td class="col-stock"><%= item.inventory %></td>
+              <td><%= item.active ? 'Active' : 'Inactive' %></td>
+              <td><%= item.sort_order %></td>
+              <td>
+                <a class="button small" href="/admin/items/<%= item.id %>/edit">Edit</a>
+                <form method="post" action="/admin/items/<%= item.id %>/delete" class="inline-form">
+                  <button class="button small" type="submit" onclick="return confirm('Delete this item?')">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+<%- include('../../partials/footer') %>

@@ -1,0 +1,20 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <h2>Add Student</h2>
+  <% if (error) { %>
+    <div class="notice error"><%= error %></div>
+  <% } %>
+  <form method="post" action="/admin/students/new" class="form-stack">
+    <label class="form-label">Name
+      <input type="text" name="name" class="text-input" required />
+    </label>
+    <label class="form-label">Notes
+      <textarea name="notes" class="text-input" rows="3"></textarea>
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="active" checked /> Active
+    </label>
+    <button class="button" type="submit">Create Student</button>
+  </form>
+</section>
+<%- include('../../partials/footer') %>

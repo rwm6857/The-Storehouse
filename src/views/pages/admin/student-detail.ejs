@@ -1,0 +1,44 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <div class="panel-header">
+    <h2><%= student.name %></h2>
+    <div class="button-row">
+      <a class="button" href="/s/<%= student.qr_id %>">Open Public View</a>
+      <a class="button" href="/admin/students/<%= student.id %>/edit">Edit</a>
+    </div>
+  </div>
+  <div class="student-detail-grid">
+    <div>
+      <p><strong>Status:</strong> <%= student.active ? 'Active' : 'Inactive' %></p>
+      <p><strong><%= labels.shekels_label %>:</strong> <%= student.balance %></p>
+      <p><strong><%= labels.talents_label %>:</strong> <%= student.talents %></p>
+      <p><strong>Notes:</strong> <%= student.notes || '—' %></p>
+      <p><strong>QR ID:</strong> <%= student.qr_id %></p>
+      <form method="post" action="/admin/students/<%= student.id %>/regenerate" class="inline-form">
+        <button class="button" type="submit" onclick="return confirm('Regenerate QR ID? Old cards will stop working.')">Regenerate QR ID</button>
+      </form>
+    </div>
+    <div class="qr-card">
+      <img src="/qr/<%= student.qr_id %>.png" alt="QR code" />
+      <a class="button" href="/qr/<%= student.qr_id %>.png?download=1">Download QR PNG</a>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>Recent Transactions</h3>
+  <% if (transactions.length === 0) { %>
+    <p class="muted">No transactions yet.</p>
+  <% } else { %>
+    <ul class="activity-list">
+      <% transactions.forEach((tx) => { %>
+        <li>
+          <span class="activity-time"><%= tx.created_at.replace('T', ' ').slice(0, 16) %></span>
+          <span class="activity-reason"><%= tx.reason || tx.type %></span>
+          <span class="activity-amount"><%= tx.amount_shekels %></span>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+<%- include('../../partials/footer') %>

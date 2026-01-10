@@ -1,0 +1,40 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <h2>Settings</h2>
+  <% if (error) { %>
+    <div class="notice error"><%= error %></div>
+  <% } %>
+  <% if (saved) { %>
+    <div class="notice success">Settings saved.</div>
+  <% } %>
+  <form method="post" action="/admin/settings" class="form-grid">
+    <label class="form-label">Attendance Shekels
+      <input type="number" name="attendance_shekels" class="text-input" min="0" value="<%= economy.attendance_shekels %>" required />
+    </label>
+    <label class="form-label">Participation Shekels
+      <input type="number" name="participation_shekels" class="text-input" min="0" value="<%= economy.participation_shekels %>" required />
+    </label>
+    <label class="form-label">Memory Verse Shekels
+      <input type="number" name="memory_verse_shekels" class="text-input" min="0" value="<%= economy.memory_verse_shekels %>" required />
+    </label>
+    <label class="form-label">Bonus Min
+      <input type="number" name="bonus_min" class="text-input" min="0" value="<%= economy.bonus_min %>" required />
+    </label>
+    <label class="form-label">Bonus Max
+      <input type="number" name="bonus_max" class="text-input" min="0" value="<%= economy.bonus_max %>" required />
+    </label>
+    <label class="form-label">Shekels per Talent
+      <input type="number" name="shekels_per_talent" class="text-input" min="1" value="<%= economy.shekels_per_talent %>" required />
+    </label>
+
+    <label class="form-label">Shekels Label (optional)
+      <input type="text" name="shekels_label" class="text-input" value="<%= labels.shekels_label %>" />
+    </label>
+    <label class="form-label">Talents Label (optional)
+      <input type="text" name="talents_label" class="text-input" value="<%= labels.talents_label %>" />
+    </label>
+
+    <button class="button" type="submit">Save Settings</button>
+  </form>
+</section>
+<%- include('../../partials/footer') %>

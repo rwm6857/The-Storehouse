@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+<section class="panel">
+  <h2>Shop Mode</h2>
+  <p>Use the PC webcam to scan a student QR card for checkout.</p>
+  <div class="scan-controls">
+    <button class="button" id="startScan">Start Camera</button>
+    <button class="button" id="stopScan" disabled>Stop Camera</button>
+  </div>
+  <div id="qr-reader" class="scan-reader"></div>
+  <div id="scanMessage" class="notice"></div>
+</section>
+
+<script src="https://unpkg.com/html5-qrcode" defer></script>
+<script>
+  const startBtn = document.getElementById('startScan');
+  const stopBtn = document.getElementById('stopScan');
+  const message = document.getElementById('scanMessage');
+  let qrScanner = null;
+
+  function setMessage(text) {
+    message.textContent = text;
+  }
+
+  function extractQrId(text) {
+    try {
+      const url = new URL(text);
+      const parts = url.pathname.split('/');
+      const index = parts.indexOf('s');
+      if (index !== -1 && parts[index + 1]) {
+        return parts[index + 1];
+      }
+    } catch (error) {
+      // Not a full URL
+    }
+
+    if (text.includes('/s/')) {
+      const parts = text.split('/s/');
+      return parts[1] || text;
+    }
+
+    return text;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (!window.Html5Qrcode) {
+      setMessage('Scanner library is loading. Please try again in a moment.');
+      return;
+    }
+
+    qrScanner = new Html5Qrcode('qr-reader');
+    qrScanner
+      .start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 260, height: 260 } },
+        (decodedText) => {
+          const qrId = extractQrId(decodedText);
+          window.location.href = `/s/${qrId}`;
+        },
+        () => {}
+      )
+      .then(() => {
+        setMessage('Camera active. Hold a QR code steady.');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      })
+      .catch((err) => {
+        setMessage(`Camera error: ${err}`);
+      });
+  });
+
+  stopBtn.addEventListener('click', () => {
+    if (!qrScanner) {
+      return;
+    }
+    qrScanner
+      .stop()
+      .then(() => {
+        qrScanner.clear();
+        setMessage('Camera stopped.');
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      })
+      .catch((err) => {
+        setMessage(`Stop error: ${err}`);
+      });
+  });
+</script>
+<%- include('../partials/footer') %>

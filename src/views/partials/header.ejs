@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= appName %></title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="sky-background"></div>
+  <div class="page-wrap">
+    <header class="site-header">
+      <div class="title-row">
+        <img src="/assets/sparkle.gif" alt="" class="sparkle" />
+        <h1><%= appName %></h1>
+      </div>
+      <p class="tagline">A local micro-economy and snack bar for youth group nights.</p>
+      <% const path = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : ''; %>
+      <nav class="site-nav">
+        <a href="/" class="<%= path === '/' ? 'active' : '' %>">Home</a>
+        <a href="/scan" class="<%= path.startsWith('/scan') ? 'active' : '' %>">Shop Mode</a>
+        <% if (isAdmin) { %>
+          <a href="/admin/students" class="<%= path.startsWith('/admin/students') ? 'active' : '' %>">Students</a>
+          <a href="/admin/items" class="<%= path.startsWith('/admin/items') ? 'active' : '' %>">Items</a>
+          <a href="/admin/settings" class="<%= path.startsWith('/admin/settings') ? 'active' : '' %>">Settings</a>
+          <form action="/admin/logout" method="post" class="inline-form">
+            <button type="submit" class="link-button">Log out</button>
+          </form>
+        <% } else { %>
+          <a href="/admin/login" class="<%= path.startsWith('/admin/login') ? 'active' : '' %>">Leader Login</a>
+        <% } %>
+      </nav>
+    </header>
+    <main class="content-panel">

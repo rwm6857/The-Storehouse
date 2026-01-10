@@ -1,0 +1,20 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <h2>Student Created</h2>
+  <p><strong><%= student.name %></strong> has a new QR card.</p>
+  <div class="qr-card">
+    <img src="/qr/<%= student.qr_id %>.png" alt="QR code" />
+    <div>
+      <p>Student URL:</p>
+      <input type="text" class="text-input" id="studentUrl" readonly />
+      <a class="button" href="/qr/<%= student.qr_id %>.png?download=1">Download QR PNG</a>
+      <a class="button" href="/s/<%= student.qr_id %>">Open Student Page</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  const urlInput = document.getElementById('studentUrl');
+  urlInput.value = `${window.location.origin}/s/<%= student.qr_id %>`;
+</script>
+<%- include('../../partials/footer') %>

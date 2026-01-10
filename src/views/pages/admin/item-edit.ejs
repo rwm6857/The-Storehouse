@@ -1,0 +1,32 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <h2>Edit Item</h2>
+  <% if (error) { %>
+    <div class="notice error"><%= error %></div>
+  <% } %>
+  <form method="post" action="/admin/items/<%= item.id %>/edit" class="form-stack">
+    <label class="form-label">Name
+      <input type="text" name="name" class="text-input" value="<%= item.name %>" required />
+    </label>
+    <label class="form-label">Cost (₪)
+      <input type="number" name="price_shekels" class="text-input" min="0" value="<%= item.price_shekels %>" required />
+    </label>
+    <label class="form-label">Stock
+      <input type="number" name="inventory" class="text-input" min="0" value="<%= item.inventory %>" required />
+    </label>
+    <label class="form-label">Category
+      <input type="text" name="category" class="text-input" value="<%= item.category %>" />
+    </label>
+    <label class="form-label">Sort Order
+      <input type="number" name="sort_order" class="text-input" value="<%= item.sort_order %>" />
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="active" <%= item.active ? 'checked' : '' %> /> Active
+    </label>
+    <div class="button-row">
+      <button class="button" type="submit">Save</button>
+      <a class="button" href="/admin/items">Cancel</a>
+    </div>
+  </form>
+</section>
+<%- include('../../partials/footer') %>

@@ -1,0 +1,76 @@
+<%- include('../partials/header') %>
+<% const shopItems = (typeof items !== 'undefined' && items) ? items : []; %>
+<section class="home-grid">
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Student Roster</h3>
+      <input type="text" id="studentSearch" placeholder="Search students" class="text-input" />
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="studentTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th><%= labels.shekels_label %></th>
+            <th><%= labels.talents_label %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% students.forEach((student) => { %>
+            <tr>
+              <td><%= student.name %></td>
+              <td><%= student.balance %></td>
+              <td><%= student.talents %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Shop List</h3>
+    </div>
+    <% if (shopItems.length === 0) { %>
+      <p class="muted">No active items yet.</p>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th class="col-cost">Cost (₪)</th>
+              <th class="col-stock">Stock</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% shopItems.forEach((item) => { %>
+              <tr>
+                <td><%= item.name %></td>
+                <td class="col-cost">₪<%= item.price_shekels %></td>
+                <td class="col-stock"><%= item.inventory %></td>
+                <td><%= item.active ? 'Active' : 'Inactive' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<script>
+  const searchInput = document.getElementById('studentSearch');
+  const studentTable = document.getElementById('studentTable');
+  searchInput.addEventListener('input', (event) => {
+    const term = event.target.value.toLowerCase();
+    const rows = studentTable.querySelectorAll('tbody tr');
+    rows.forEach((row) => {
+      const name = row.children[0].textContent.toLowerCase();
+      row.style.display = name.includes(term) ? '' : 'none';
+    });
+  });
+</script>
+<%- include('../partials/footer') %>

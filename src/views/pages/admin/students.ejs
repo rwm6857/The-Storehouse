@@ -1,0 +1,54 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <div class="panel-header">
+    <h2>Students</h2>
+    <a class="button" href="/admin/students/new">Add Student</a>
+  </div>
+  <div class="filters">
+    <a class="chip <%= filter === 'active' ? 'active' : '' %>" href="/admin/students?filter=active">Active</a>
+    <a class="chip <%= filter === 'inactive' ? 'active' : '' %>" href="/admin/students?filter=inactive">Inactive</a>
+    <a class="chip <%= filter === 'all' ? 'active' : '' %>" href="/admin/students?filter=all">All</a>
+    <input type="text" id="adminStudentSearch" placeholder="Search" class="text-input" />
+  </div>
+  <div class="table-wrap">
+    <table class="data-table" id="adminStudentTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+          <th><%= labels.shekels_label %></th>
+          <th><%= labels.talents_label %></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% students.forEach((student) => { %>
+          <tr>
+            <td><%= student.name %></td>
+            <td><%= student.active ? 'Active' : 'Inactive' %></td>
+            <td><%= student.balance %></td>
+            <td><%= student.talents %></td>
+            <td>
+              <a class="button small" href="/admin/students/<%= student.id %>">View</a>
+              <a class="button small" href="/s/<%= student.qr_id %>">Open</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  const adminSearchInput = document.getElementById('adminStudentSearch');
+  const adminStudentTable = document.getElementById('adminStudentTable');
+  adminSearchInput.addEventListener('input', (event) => {
+    const term = event.target.value.toLowerCase();
+    const rows = adminStudentTable.querySelectorAll('tbody tr');
+    rows.forEach((row) => {
+      const name = row.children[0].textContent.toLowerCase();
+      row.style.display = name.includes(term) ? '' : 'none';
+    });
+  });
+</script>
+<%- include('../../partials/footer') %>

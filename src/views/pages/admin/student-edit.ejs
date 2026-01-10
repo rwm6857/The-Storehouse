@@ -1,0 +1,23 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <h2>Edit Student</h2>
+  <% if (error) { %>
+    <div class="notice error"><%= error %></div>
+  <% } %>
+  <form method="post" action="/admin/students/<%= student.id %>/edit" class="form-stack">
+    <label class="form-label">Name
+      <input type="text" name="name" class="text-input" value="<%= student.name %>" required />
+    </label>
+    <label class="form-label">Notes
+      <textarea name="notes" class="text-input" rows="3"><%= student.notes || '' %></textarea>
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="active" <%= student.active ? 'checked' : '' %> /> Active
+    </label>
+    <div class="button-row">
+      <button class="button" type="submit">Save Changes</button>
+      <a class="button" href="/admin/students/<%= student.id %>">Cancel</a>
+    </div>
+  </form>
+</section>
+<%- include('../../partials/footer') %>
