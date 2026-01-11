@@ -1,14 +1,16 @@
 require('dotenv').config();
 
 const crypto = require('crypto');
+const fs = require('fs');
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const os = require('os');
 
-const { getCurrencyLabels } = require('./db');
+const { getCurrencyLabels, dbPath } = require('./db');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
+const { createTerminalUi } = require('./terminalUi');
 
 const app = express();
 
@@ -52,11 +54,15 @@ app.use((req, res, next) => {
   res.locals.appName = 'The Storehouse';
   res.locals.isAdmin = Boolean(req.session && req.session.isAdmin);
   res.locals.labels = getCurrencyLabels();
+  res.locals.currencySymbols = { shekels: '\u20AA', talents: '\u05DB' };
   res.locals.currentPath = req.path;
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+const staticDir = fs.existsSync(path.join(__dirname, 'dist'))
+  ? path.join(__dirname, 'dist')
+  : path.join(__dirname, 'public');
+app.use(express.static(staticDir));
 
 app.use('/', publicRoutes({ verifyPasscode }));
 app.use('/admin', adminRoutes({ verifyPasscode }));
@@ -77,12 +83,25 @@ function getLanIp() {
   return null;
 }
 
-app.listen(PORT, HOST, () => {
-  const lanIp = getLanIp();
-  // eslint-disable-next-line no-console
-  console.log(`The Storehouse running on http://${HOST}:${PORT}`);
-  if (lanIp) {
-    // eslint-disable-next-line no-console
-    console.log(`LAN access: http://${lanIp}:${PORT}`);
-  }
+const lanIp = getLanIp();
+const terminalUi = createTerminalUi({
+  appName: 'The Storehouse',
+  host: HOST,
+  port: PORT,
+  lanIp,
+  dbPath
 });
+
+const server = app.listen(PORT, HOST, () => {
+  terminalUi.start(server);
+});
+
+function setupGracefulShutdown() {
+  const shutdown = () => {
+    terminalUi.handleShutdown(server);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+setupGracefulShutdown();

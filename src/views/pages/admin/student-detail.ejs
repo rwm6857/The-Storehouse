@@ -4,14 +4,27 @@
     <h2><%= student.name %></h2>
     <div class="button-row">
       <a class="button" href="/s/<%= student.qr_id %>">Open Public View</a>
-      <a class="button" href="/admin/students/<%= student.id %>/edit">Edit</a>
+      <a class="button icon-button" href="/admin/students/<%= student.id %>/edit" aria-label="Edit student" title="Edit student">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25z"></path>
+          <path d="M20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.13z"></path>
+        </svg>
+      </a>
+      <form method="post" action="/admin/students/<%= student.id %>/delete" class="inline-form">
+        <button class="button icon-button" type="submit" aria-label="Delete student" title="Delete student" onclick="return confirm('Delete this student and all transactions?')">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 7h12l-1 14H7L6 7z"></path>
+            <path d="M9 4h6l1 2H8l1-2z"></path>
+          </svg>
+        </button>
+      </form>
     </div>
   </div>
   <div class="student-detail-grid">
     <div>
       <p><strong>Status:</strong> <%= student.active ? 'Active' : 'Inactive' %></p>
-      <p><strong><%= labels.shekels_label %>:</strong> <%= student.balance %></p>
-      <p><strong><%= labels.talents_label %>:</strong> <%= student.talents %></p>
+      <p><strong><%= labels.shekels_label %>:</strong> <%= student.balance %><%= currencySymbols.shekels %></p>
+      <p><strong><%= labels.talents_label %>:</strong> <%= currencySymbols.talents %><%= student.talents %></p>
       <p><strong>Notes:</strong> <%= student.notes || '—' %></p>
       <p><strong>QR ID:</strong> <%= student.qr_id %></p>
       <form method="post" action="/admin/students/<%= student.id %>/regenerate" class="inline-form">
@@ -35,7 +48,7 @@
         <li>
           <span class="activity-time"><%= tx.created_at.replace('T', ' ').slice(0, 16) %></span>
           <span class="activity-reason"><%= tx.reason || tx.type %></span>
-          <span class="activity-amount"><%= tx.amount_shekels %></span>
+          <span class="activity-amount"><%= tx.amount_shekels %><%= currencySymbols.shekels %></span>
         </li>
       <% }) %>
     </ul>

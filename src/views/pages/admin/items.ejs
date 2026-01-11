@@ -10,7 +10,7 @@
     <label class="form-label">Name
       <input type="text" name="name" class="text-input" required />
     </label>
-    <label class="form-label">Cost (₪)
+    <label class="form-label">Cost (<%= currencySymbols.shekels %>)
       <input type="number" name="price_shekels" class="text-input" min="0" required />
     </label>
     <label class="form-label">Stock
@@ -18,6 +18,14 @@
     </label>
     <label class="form-label">Category
       <input type="text" name="category" class="text-input" value="snack" />
+    </label>
+    <label class="form-label">Rarity
+      <select name="rarity" class="text-input">
+        <option value="common" selected>Common</option>
+        <option value="uncommon">Uncommon</option>
+        <option value="rare">Rare</option>
+        <option value="legendary">Legendary</option>
+      </select>
     </label>
     <label class="form-label">Sort Order
       <input type="number" name="sort_order" class="text-input" value="0" />
@@ -34,13 +42,15 @@
   <% if (items.length === 0) { %>
     <p class="muted">No items yet.</p>
   <% } else { %>
+    <% const formatRarity = (rarity) => (rarity || 'common').replace(/^\w/, (c) => c.toUpperCase()); %>
     <div class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
             <th>Name</th>
             <th>Category</th>
-            <th class="col-cost">Cost (₪)</th>
+            <th>Rarity</th>
+            <th class="col-cost">Cost (<%= currencySymbols.shekels %>)</th>
             <th class="col-stock">Stock</th>
             <th>Status</th>
             <th>Order</th>
@@ -52,14 +62,31 @@
             <tr>
               <td><%= item.name %></td>
               <td><%= item.category %></td>
-              <td class="col-cost">₪<%= item.price_shekels %></td>
+              <td>
+                <% if ((item.rarity || 'common') === 'common') { %>
+                  Common
+                <% } else { %>
+                  <span class="rarity-badge rarity-<%= item.rarity %>"><%= formatRarity(item.rarity) %></span>
+                <% } %>
+              </td>
+              <td class="col-cost"><%= item.price_shekels %><%= currencySymbols.shekels %></td>
               <td class="col-stock"><%= item.inventory %></td>
               <td><%= item.active ? 'Active' : 'Inactive' %></td>
               <td><%= item.sort_order %></td>
               <td>
-                <a class="button small" href="/admin/items/<%= item.id %>/edit">Edit</a>
+                <a class="button small icon-button" href="/admin/items/<%= item.id %>/edit" aria-label="Edit item" title="Edit item">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25z"></path>
+                    <path d="M20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.13z"></path>
+                  </svg>
+                </a>
                 <form method="post" action="/admin/items/<%= item.id %>/delete" class="inline-form">
-                  <button class="button small" type="submit" onclick="return confirm('Delete this item?')">Delete</button>
+                  <button class="button small icon-button" type="submit" aria-label="Delete item" title="Delete item" onclick="return confirm('Delete this item?')">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M6 7h12l-1 14H7L6 7z"></path>
+                      <path d="M9 4h6l1 2H8l1-2z"></path>
+                    </svg>
+                  </button>
                 </form>
               </td>
             </tr>

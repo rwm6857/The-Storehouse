@@ -26,8 +26,8 @@
           <tr>
             <td><%= student.name %></td>
             <td><%= student.active ? 'Active' : 'Inactive' %></td>
-            <td><%= student.balance %></td>
-            <td><%= student.talents %></td>
+            <td><%= student.balance %><%= currencySymbols.shekels %></td>
+            <td><%= currencySymbols.talents %><%= student.talents %></td>
             <td>
               <a class="button small" href="/admin/students/<%= student.id %>">View</a>
               <a class="button small" href="/s/<%= student.qr_id %>">Open</a>

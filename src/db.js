@@ -41,6 +41,7 @@ db.exec(`
     active INTEGER NOT NULL DEFAULT 1,
     sort_order INTEGER NOT NULL DEFAULT 0,
     category TEXT NOT NULL DEFAULT 'snack',
+    rarity TEXT NOT NULL DEFAULT 'common',
     created_at TEXT NOT NULL
   );
 
@@ -67,6 +68,12 @@ if (!hasInventory) {
 }
 db.exec('UPDATE items SET inventory = 0 WHERE inventory IS NULL');
 
+const hasRarity = itemColumns.some((col) => col.name === 'rarity');
+if (!hasRarity) {
+  db.exec("ALTER TABLE items ADD COLUMN rarity TEXT NOT NULL DEFAULT 'common'");
+}
+db.exec("UPDATE items SET rarity = 'common' WHERE rarity IS NULL OR rarity = ''");
+
 const defaultEconomy = {
   attendance_shekels: 2,
   participation_shekels: 1,
@@ -79,6 +86,11 @@ const defaultEconomy = {
 const defaultLabels = {
   shekels_label: 'Shekels',
   talents_label: 'Talents'
+};
+
+const symbolLabels = {
+  shekels_label: '\u20AA',
+  talents_label: '\u05DB'
 };
 
 function upsertSetting(key, value) {
@@ -102,6 +114,25 @@ function initSettings() {
   const labelsRow = getSetting('labels');
   if (!labelsRow) {
     upsertSetting('labels', JSON.stringify(defaultLabels));
+  } else {
+    try {
+      const existing = JSON.parse(labelsRow.value);
+      let changed = false;
+      const next = { ...existing };
+      if (!existing.shekels_label || existing.shekels_label === symbolLabels.shekels_label) {
+        next.shekels_label = defaultLabels.shekels_label;
+        changed = true;
+      }
+      if (!existing.talents_label || existing.talents_label === symbolLabels.talents_label) {
+        next.talents_label = defaultLabels.talents_label;
+        changed = true;
+      }
+      if (changed) {
+        upsertSetting('labels', JSON.stringify(next));
+      }
+    } catch {
+      // ignore malformed settings
+    }
   }
 }
 

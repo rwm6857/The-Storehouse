@@ -1,0 +1,16 @@
+<service>
+  <id>StorehouseService</id>
+  <name>The Storehouse</name>
+  <description>The Storehouse web app service.</description>
+  <executable>%BASE%\..\node\node.exe</executable>
+  <arguments>%BASE%\..\app\src\server.js</arguments>
+  <workingdirectory>%BASE%\..\app</workingdirectory>
+  <env name="PORT" value="3040" />
+  <env name="NODE_ENV" value="production" />
+  <env name="STOREHOUSE_NO_TUI" value="1" />
+  <log mode="roll-by-size">
+    <sizeThreshold>10485760</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+  <onfailure action="restart" delay="5 sec" />
+</service>

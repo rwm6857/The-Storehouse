@@ -85,6 +85,19 @@ For development with auto-reload:
 npm run dev
 ```
 
+### Interactive terminal experience
+When you start the server in a real terminal (PowerShell, Windows Terminal, macOS/Linux shells), The Storehouse now shows a small dashboard and accepts a few quick keys:
+
+- `o` or `Enter` — open the web app in your default browser (uses the LAN URL when available).
+- `l` — print the LAN URL for sharing with phones/tablets on Wi-Fi.
+- `r` — refresh the info panel.
+- `h` or `?` — show in-terminal help.
+- `q` or `Ctrl+C` — quit gracefully.
+
+Notes:
+- Falls back to plain text when colors/TTY features are unavailable (e.g., background service).
+- Disable the dashboard with `STOREHOUSE_NO_TUI=1`. Disable colors with `NO_COLOR=1` or `STOREHOUSE_NO_COLOR=1`.
+
 ## Access from phones/tablets on the same LAN
 1. Find the PC’s local IP address:
    - Windows: open Command Prompt and run `ipconfig`.

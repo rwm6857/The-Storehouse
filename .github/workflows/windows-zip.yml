@@ -1,0 +1,145 @@
+name: Windows Zip
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine Node version spec
+        id: node-spec
+        shell: pwsh
+        run: |
+          $versionSpec = ''
+          if (Test-Path .nvmrc) {
+            $versionSpec = (Get-Content .nvmrc -Raw).Trim()
+          }
+          if (-not $versionSpec) {
+            $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+            if ($pkg.engines -and $pkg.engines.node) {
+              $versionSpec = $pkg.engines.node.Trim()
+            }
+          }
+          if (-not $versionSpec) {
+            $versionSpec = '20'
+          }
+          "spec=$versionSpec" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node-spec.outputs.spec }}
+          cache: npm
+
+      - name: Capture resolved Node version
+        id: node-version
+        shell: pwsh
+        run: |
+          $resolved = (node -p "process.version").Trim().TrimStart('v')
+          "version=$resolved" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Install dependencies (production only)
+        run: npm ci --omit=dev
+
+      - name: Build client assets
+        run: npm run build:client
+
+      - name: Package Windows ZIP
+        shell: pwsh
+        env:
+          NODE_VERSION: ${{ steps.node-version.outputs.version }}
+          WINSW_VERSION: '2.12.0'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Resolve-Path .
+          $stage = Join-Path $root 'dist\Storehouse'
+
+          if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+
+          New-Item -ItemType Directory -Force -Path (Join-Path $stage 'app') | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $stage 'node') | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $stage 'service') | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $stage 'scripts') | Out-Null
+
+          Copy-Item src (Join-Path $stage 'app\src') -Recurse -Force
+          Copy-Item node_modules (Join-Path $stage 'app\node_modules') -Recurse -Force
+
+          $distSrc = Join-Path $root 'build\dist'
+          $distDst = Join-Path $stage 'app\src\dist'
+          if (!(Test-Path $distSrc)) { throw "Missing build output: $distSrc" }
+          if (Test-Path $distDst) { Remove-Item $distDst -Recurse -Force }
+          Copy-Item $distSrc $distDst -Recurse -Force
+
+          $viewsSrc = Join-Path $root 'build\views'
+          $viewsDst = Join-Path $stage 'app\src\views'
+          if (Test-Path $viewsSrc) {
+            if (Test-Path $viewsDst) { Remove-Item $viewsDst -Recurse -Force }
+            Copy-Item $viewsSrc $viewsDst -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Force -Path (Join-Path $stage 'app\data') | Out-Null
+
+          if (Test-Path .env.example) {
+            Copy-Item .env.example (Join-Path $stage 'app\.env.example') -Force
+          }
+          if (Test-Path package.json) {
+            Copy-Item package.json (Join-Path $stage 'app\package.json') -Force
+          }
+          if (Test-Path package-lock.json) {
+            Copy-Item package-lock.json (Join-Path $stage 'app\package-lock.json') -Force
+          }
+          if (Test-Path deploy\windows\app\config.json) {
+            Copy-Item deploy\windows\app\config.json (Join-Path $stage 'app\config.json') -Force
+          }
+
+          Copy-Item deploy\windows\scripts\* (Join-Path $stage 'scripts') -Recurse -Force
+          Copy-Item deploy\windows\service\StorehouseService.xml (Join-Path $stage 'service') -Force
+          Copy-Item deploy\windows\README-WINDOWS.md (Join-Path $stage 'README-WINDOWS.md') -Force
+
+          $nodeVersion = $env:NODE_VERSION
+          $nodeZip = Join-Path $env:RUNNER_TEMP "node-$nodeVersion-win-x64.zip"
+          $nodeUrl = "https://nodejs.org/dist/v$nodeVersion/node-v$nodeVersion-win-x64.zip"
+          Write-Host "Downloading Node $nodeVersion from $nodeUrl"
+          Invoke-WebRequest -Uri $nodeUrl -OutFile $nodeZip
+          $nodeExtract = Join-Path $env:RUNNER_TEMP "node-$nodeVersion-extract"
+          if (Test-Path $nodeExtract) { Remove-Item $nodeExtract -Recurse -Force }
+          Expand-Archive -Path $nodeZip -DestinationPath $nodeExtract
+          $nodeExe = Get-ChildItem $nodeExtract -Recurse -Filter node.exe | Select-Object -First 1
+          Copy-Item $nodeExe.FullName (Join-Path $stage 'node\node.exe') -Force
+
+          $winswVersion = $env:WINSW_VERSION
+          $winswUrl = "https://github.com/winsw/winsw/releases/download/v$winswVersion/WinSW-x64.exe"
+          Write-Host "Downloading WinSW $winswVersion from $winswUrl"
+          Invoke-WebRequest -Uri $winswUrl -OutFile (Join-Path $stage 'service\StorehouseService.exe')
+
+          $sha = (git rev-parse --short HEAD).Trim()
+          $date = Get-Date -Format 'yyyy-MM-dd-HHmm'
+          "$sha-$date" | Set-Content -Path (Join-Path $stage 'VERSION.txt')
+
+          $zipPath = Join-Path $root 'dist\Storehouse-win-x64.zip'
+          if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+          Compress-Archive -Path $stage -DestinationPath $zipPath
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Storehouse-win-x64
+          path: dist\Storehouse-win-x64.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Storehouse-win-x64.zip

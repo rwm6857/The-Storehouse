@@ -4,11 +4,12 @@
   <% if (error) { %>
     <div class="notice error"><%= error %></div>
   <% } %>
+  <% const rarityValue = item.rarity || 'common'; %>
   <form method="post" action="/admin/items/<%= item.id %>/edit" class="form-stack">
     <label class="form-label">Name
       <input type="text" name="name" class="text-input" value="<%= item.name %>" required />
     </label>
-    <label class="form-label">Cost (₪)
+    <label class="form-label">Cost (<%= currencySymbols.shekels %>)
       <input type="number" name="price_shekels" class="text-input" min="0" value="<%= item.price_shekels %>" required />
     </label>
     <label class="form-label">Stock
@@ -16,6 +17,14 @@
     </label>
     <label class="form-label">Category
       <input type="text" name="category" class="text-input" value="<%= item.category %>" />
+    </label>
+    <label class="form-label">Rarity
+      <select name="rarity" class="text-input">
+        <option value="common" <%= rarityValue === 'common' ? 'selected' : '' %>>Common</option>
+        <option value="uncommon" <%= rarityValue === 'uncommon' ? 'selected' : '' %>>Uncommon</option>
+        <option value="rare" <%= rarityValue === 'rare' ? 'selected' : '' %>>Rare</option>
+        <option value="legendary" <%= rarityValue === 'legendary' ? 'selected' : '' %>>Legendary</option>
+      </select>
     </label>
     <label class="form-label">Sort Order
       <input type="number" name="sort_order" class="text-input" value="<%= item.sort_order %>" />

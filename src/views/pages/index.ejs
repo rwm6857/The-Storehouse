@@ -11,16 +11,16 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th><%= labels.shekels_label %></th>
-            <th><%= labels.talents_label %></th>
+              <th><%= labels.shekels_label %></th>
+              <th><%= labels.talents_label %></th>
           </tr>
         </thead>
         <tbody>
           <% students.forEach((student) => { %>
             <tr>
               <td><%= student.name %></td>
-              <td><%= student.balance %></td>
-              <td><%= student.talents %></td>
+              <td><%= student.balance %><%= currencySymbols.shekels %></td>
+              <td><%= currencySymbols.talents %><%= student.talents %></td>
             </tr>
           <% }) %>
         </tbody>
@@ -35,12 +35,14 @@
     <% if (shopItems.length === 0) { %>
       <p class="muted">No active items yet.</p>
     <% } else { %>
+      <% const formatRarity = (rarity) => (rarity || 'common').replace(/^\w/, (c) => c.toUpperCase()); %>
       <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
               <th>Item</th>
-              <th class="col-cost">Cost (₪)</th>
+              <th>Rarity</th>
+              <th class="col-cost">Cost (<%= currencySymbols.shekels %>)</th>
               <th class="col-stock">Stock</th>
               <th>Status</th>
             </tr>
@@ -49,7 +51,14 @@
             <% shopItems.forEach((item) => { %>
               <tr>
                 <td><%= item.name %></td>
-                <td class="col-cost">₪<%= item.price_shekels %></td>
+                <td>
+                  <% if ((item.rarity || 'common') === 'common') { %>
+                    Common
+                  <% } else { %>
+                    <span class="rarity-badge rarity-<%= item.rarity %>"><%= formatRarity(item.rarity) %></span>
+                  <% } %>
+                </td>
+                <td class="col-cost"><%= item.price_shekels %><%= currencySymbols.shekels %></td>
                 <td class="col-stock"><%= item.inventory %></td>
                 <td><%= item.active ? 'Active' : 'Inactive' %></td>
               </tr>

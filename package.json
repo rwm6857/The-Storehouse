@@ -7,7 +7,11 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node scripts/seed.js",
-    "build:exe": "pkg . --targets node18-win-x64 --output dist/TheStorehouse.exe"
+    "clear:data": "node scripts/clear-data.js",
+    "build:exe": "pkg . --targets node18-win-x64 --output dist/TheStorehouse.exe",
+    "build:client": "node scripts/build-client.js",
+    "build:server": "node scripts/build-server.js",
+    "build:all": "npm run build:client && npm run build:server"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
@@ -15,9 +19,11 @@
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "express-session": "^1.17.3",
+    "picocolors": "^1.1.1",
     "qrcode": "^1.5.3"
   },
   "devDependencies": {
+    "@vercel/ncc": "^0.38.4",
     "nodemon": "^3.1.0",
     "pkg": "^5.8.1"
   },
