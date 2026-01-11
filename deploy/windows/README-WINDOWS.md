@@ -2,6 +2,8 @@
 
 This folder describes the Windows ZIP artifact produced by the CI pipeline. The ZIP contains a portable Node runtime, the server source, built static assets, production `node_modules` (including `better-sqlite3`), and a WinSW service wrapper.
 
+The ZIP is built by the GitHub Actions workflow at `.github/workflows/windows-zip.yml`. Local Windows build scripts are intentionally not supported.
+
 ## Install
 1. Unzip the release to a stable location, for example `C:\Storehouse`.
 2. Create your config file:
