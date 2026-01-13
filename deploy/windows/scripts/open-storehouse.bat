@@ -3,7 +3,7 @@ setlocal
 
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "ROOT_DIR=%%~fI"
-set "XML_PATH=%ROOT_DIR%\service\StorehouseService.xml"
+set "XML_PATH=%ROOT_DIR%\service\TheStorehouseService.xml"
 set PORT=3040
 
 if exist "%XML_PATH%" (

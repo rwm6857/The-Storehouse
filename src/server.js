@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const crypto = require('crypto');
 const fs = require('fs');
 const express = require('express');
@@ -7,6 +5,7 @@ const session = require('express-session');
 const path = require('path');
 const os = require('os');
 
+const { getRuntimeConfig, DEFAULT_PORT, DEFAULT_HOST } = require('./runtimeConfig');
 const { getCurrencyLabels, dbPath } = require('./db');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
@@ -14,8 +13,11 @@ const { createTerminalUi } = require('./terminalUi');
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+const { config, paths } = getRuntimeConfig();
+
+const portValue = process.env.PORT || config.port;
+const PORT = Number.parseInt(portValue, 10) || DEFAULT_PORT;
+const HOST = process.env.HOST || config.host || DEFAULT_HOST;
 
 function getLanIp() {
   const nets = os.networkInterfaces();
@@ -31,9 +33,11 @@ function getLanIp() {
 
 const lanIp = getLanIp();
 
-const adminPasscode = process.env.ADMIN_PASSCODE;
+const adminPasscode = process.env.ADMIN_PASSCODE || config.admin_passcode;
 if (!adminPasscode) {
-  throw new Error('ADMIN_PASSCODE is required. Set it in your .env file.');
+  throw new Error(
+    `ADMIN_PASSCODE is required. Set it in ${paths.configPath} or provide ADMIN_PASSCODE in the environment.`
+  );
 }
 
 const passHash = crypto.createHash('sha256').update(adminPasscode).digest();
@@ -54,7 +58,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
+    secret: process.env.SESSION_SECRET || config.session_secret || crypto.randomBytes(32).toString('hex'),
     resave: false,
     saveUninitialized: false,
     rolling: true,
@@ -85,6 +89,11 @@ app.use('/admin', adminRoutes({ verifyPasscode }));
 app.use((req, res) => {
   res.status(404).render('pages/404');
 });
+
+if (adminPasscode === 'change-me') {
+  // eslint-disable-next-line no-console
+  console.log('Warning: ADMIN_PASSCODE is set to the default value. Update config.json as soon as possible.');
+}
 
 const terminalUi = createTerminalUi({
   appName: 'The Storehouse',

@@ -5,18 +5,17 @@ This folder describes the Windows ZIP artifact produced by the CI pipeline. The 
 The ZIP is built by the GitHub Actions workflow at `.github/workflows/windows-zip.yml`. Local Windows build scripts are intentionally not supported.
 
 ## Install
-1. Download the **Latest** GitHub Release asset (tag `latest`) named `Storehouse-win-x64.zip`.
-2. Unzip the release to a stable location, for example `C:\Storehouse`.
-3. Create your config file:
+1. Download the **Latest** GitHub Release asset (tag `latest`) named `TheStorehouse-win-x64.zip`.
+2. Unzip the release to a stable location, for example `C:\TheStorehouse`.
+3. Create/update your config file:
    ```bat
-   copy C:\Storehouse\app\.env.example C:\Storehouse\app\.env
-   notepad C:\Storehouse\app\.env
+   notepad "C:\ProgramData\The Storehouse\config\config.json"
    ```
-   Set `ADMIN_PASSCODE` (required), and optionally `PORT`, `HOST`, and `DATABASE_PATH`.
+   Set `admin_passcode` (required), and optionally `port`, `host`, and `database_path`.
 4. Open an **Administrator** PowerShell or Command Prompt.
 5. Run:
    ```bat
-   C:\Storehouse\scripts\install-service.bat
+   C:\TheStorehouse\scripts\install-service.bat
    ```
 
 The service will start automatically on boot.
@@ -24,7 +23,7 @@ The service will start automatically on boot.
 ## Open the app
 Run:
 ```bat
-C:\Storehouse\scripts\open-storehouse.bat
+   C:\TheStorehouse\scripts\open-storehouse.bat
 ```
 This opens `http://localhost:3040` by default.
 
@@ -32,38 +31,38 @@ This opens `http://localhost:3040` by default.
 1. Download the new ZIP and extract it (any folder is fine).
 2. Run the update script from the **current install**:
    ```powershell
-   C:\Storehouse\scripts\update.ps1 -NewRoot "C:\Path\To\New\Storehouse"
+   C:\TheStorehouse\scripts\update.ps1 -NewRoot "C:\Path\To\New\TheStorehouse"
    ```
 
 The update process:
 - stops the service
 - replaces `app\src`, `app\node_modules`, and `VERSION.txt`
-- preserves `app\data`, `app\config.json`, and `app\.env`
+- preserves `C:\ProgramData\The Storehouse` data and config
 - restarts the service
 
 ## Uninstall
 From an **Administrator** terminal:
 ```bat
-C:\Storehouse\scripts\uninstall-service.bat
+   C:\TheStorehouse\scripts\uninstall-service.bat
 ```
 
 ## Logs
-Service logs are written next to the WinSW wrapper:
+Service logs are written to ProgramData:
 ```
-C:\Storehouse\service\
+C:\ProgramData\The Storehouse\logs\
 ```
-Look for `StorehouseService.out.log` and `StorehouseService.err.log`.
+Look for `TheStorehouseService.out.log` and `TheStorehouseService.err.log`.
 
 ## Port configuration
 Default port is **3040**. To change it:
-- edit `C:\Storehouse\service\StorehouseService.xml` and change the `PORT` value
+- edit `C:\TheStorehouse\service\TheStorehouseService.xml` and change the `PORT` value
 - then restart the service (or run `install-service.bat` again)
 
-Optional: you can also create `C:\Storehouse\app\.env` with `PORT=xxxx`, but the service-level `PORT` setting takes precedence unless you remove it from the XML.
+Optional: you can also create `C:\TheStorehouse\app\.env` with `PORT=xxxx`, but the service-level `PORT` setting takes precedence unless you remove it from the XML.
 
 ## Data location
 The SQLite database lives at:
 ```
-C:\Storehouse\app\data\storehouse.sqlite
+C:\ProgramData\The Storehouse\data\storehouse.sqlite
 ```
-(or the path specified by `DATABASE_PATH` in `.env`)
+(or the path specified by `database_path` in `config.json`)

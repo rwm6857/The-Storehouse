@@ -6,14 +6,14 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Write-Step($message) {
-  Write-Host "[Storehouse] $message"
+  Write-Host "[TheStorehouse] $message"
 }
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $currentRoot = Resolve-Path (Join-Path $scriptDir '..')
 $newRootResolved = Resolve-Path $NewRoot
 
-$serviceExe = Join-Path $currentRoot 'service\StorehouseService.exe'
+$serviceExe = Join-Path $currentRoot 'service\TheStorehouseService.exe'
 $srcApp = Join-Path $newRootResolved 'app'
 $dstApp = Join-Path $currentRoot 'app'
 

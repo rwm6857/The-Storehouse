@@ -1,9 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
+const { getRuntimeConfig } = require('./runtimeConfig');
 
-const DEFAULT_DB_PATH = path.join(process.cwd(), 'data', 'storehouse.sqlite');
-const dbPath = process.env.DATABASE_PATH || DEFAULT_DB_PATH;
+const { config, paths } = getRuntimeConfig();
+
+const DEFAULT_DB_PATH = path.join(paths.dataDir, 'storehouse.sqlite');
+const dbPath = process.env.DATABASE_PATH || config.database_path || DEFAULT_DB_PATH;
 
 const dbDir = path.dirname(dbPath);
 fs.mkdirSync(dbDir, { recursive: true });

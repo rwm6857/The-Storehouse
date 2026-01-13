@@ -9,12 +9,12 @@ if %errorlevel% neq 0 (
 
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "ROOT_DIR=%%~fI"
-set "SERVICE_EXE=%ROOT_DIR%\service\StorehouseService.exe"
+set "SERVICE_EXE=%ROOT_DIR%\service\TheStorehouseService.exe"
 
 if not exist "%SERVICE_EXE%" (
-  if exist "%ROOT_DIR%\service\StorehouseService.exe.html" (
-    echo Found StorehouseService.exe.html instead of StorehouseService.exe.
-    echo Re-download the Storehouse-win-x64.zip release and extract again.
+  if exist "%ROOT_DIR%\service\TheStorehouseService.exe.html" (
+    echo Found TheStorehouseService.exe.html instead of TheStorehouseService.exe.
+    echo Re-download the TheStorehouse-win-x64.zip release and extract again.
   )
   echo Service wrapper not found: %SERVICE_EXE%
   exit /b 1

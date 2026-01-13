@@ -1,4 +1,4 @@
-name: Windows Zip
+name: Windows Installer
 
 on:
   push:
@@ -58,7 +58,7 @@ jobs:
       - name: Build client assets
         run: npm run build:client
 
-      - name: Package Windows ZIP
+      - name: Package Windows staging folder
         shell: pwsh
         env:
           NODE_VERSION: ${{ steps.node-version.outputs.version }}
@@ -66,7 +66,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $root = Resolve-Path .
-          $stage = Join-Path $root 'dist\Storehouse'
+          $stage = Join-Path $root 'dist\TheStorehouse'
 
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 
@@ -107,7 +107,7 @@ jobs:
           }
 
           Copy-Item deploy\windows\scripts\* (Join-Path $stage 'scripts') -Recurse -Force
-          Copy-Item deploy\windows\service\StorehouseService.xml (Join-Path $stage 'service') -Force
+          Copy-Item deploy\windows\service\TheStorehouseService.xml (Join-Path $stage 'service') -Force
           Copy-Item deploy\windows\README-WINDOWS.md (Join-Path $stage 'README-WINDOWS.md') -Force
 
           $nodeVersion = $env:NODE_VERSION
@@ -124,21 +124,42 @@ jobs:
           $winswVersion = $env:WINSW_VERSION
           $winswUrl = "https://github.com/winsw/winsw/releases/download/v$winswVersion/WinSW-x64.exe"
           Write-Host "Downloading WinSW $winswVersion from $winswUrl"
-          Invoke-WebRequest -Uri $winswUrl -OutFile (Join-Path $stage 'service\StorehouseService.exe')
+          Invoke-WebRequest -Uri $winswUrl -OutFile (Join-Path $stage 'service\TheStorehouseService.exe')
 
           $sha = (git rev-parse --short HEAD).Trim()
           $date = Get-Date -Format 'yyyy-MM-dd-HHmm'
           "$sha-$date" | Set-Content -Path (Join-Path $stage 'VERSION.txt')
 
-          $zipPath = Join-Path $root 'dist\Storehouse-win-x64.zip'
+          $zipPath = Join-Path $root 'dist\TheStorehouse-win-x64.zip'
           if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
           Compress-Archive -Path $stage -DestinationPath $zipPath
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $versionFile = Join-Path (Resolve-Path .) 'dist\TheStorehouse\VERSION.txt'
+          $version = '0.0.0'
+          if (Test-Path $versionFile) {
+            $version = (Get-Content $versionFile -Raw).Trim()
+          }
+          & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "deploy\windows\installer\TheStorehouse.iss" "/DAppVersion=$version"
 
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Storehouse-win-x64
-          path: dist\Storehouse-win-x64.zip
+          name: TheStorehouse-win-x64
+          path: dist\TheStorehouse-win-x64.zip
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TheStorehouse-Setup
+          path: dist\TheStorehouse-Setup.exe
 
       - name: Update latest tag
         if: github.ref == 'refs/heads/main'
@@ -157,10 +178,14 @@ jobs:
           name: Latest (auto)
           prerelease: true
           target_commitish: ${{ github.sha }}
-          files: dist/Storehouse-win-x64.zip
+          files: |
+            dist/TheStorehouse-Setup.exe
+            dist/TheStorehouse-win-x64.zip
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Storehouse-win-x64.zip
+          files: |
+            dist/TheStorehouse-Setup.exe
+            dist/TheStorehouse-win-x64.zip

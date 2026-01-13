@@ -1,5 +1,5 @@
 <service>
-  <id>StorehouseService</id>
+  <id>TheStorehouse</id>
   <name>The Storehouse</name>
   <description>The Storehouse web app service.</description>
   <executable>%BASE%\..\node\node.exe</executable>
@@ -8,6 +8,10 @@
   <env name="PORT" value="3040" />
   <env name="NODE_ENV" value="production" />
   <env name="STOREHOUSE_NO_TUI" value="1" />
+  <env name="STOREHOUSE_DATA_DIR" value="C:\ProgramData\The Storehouse\data" />
+  <env name="STOREHOUSE_CONFIG_DIR" value="C:\ProgramData\The Storehouse\config" />
+  <env name="STOREHOUSE_LOG_DIR" value="C:\ProgramData\The Storehouse\logs" />
+  <logpath>C:\ProgramData\The Storehouse\logs</logpath>
   <log mode="roll-by-size">
     <sizeThreshold>10485760</sizeThreshold>
     <keepFiles>5</keepFiles>

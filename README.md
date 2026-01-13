@@ -61,10 +61,10 @@ Notes:
 2. On the phone/tablet, open:
 
 ```
-http://<PC-IP>:3000
+http://<PC-IP>:3040
 ```
 
-If you changed `PORT` in `.env`, use that port instead.
+If you changed `PORT` in `.env` or `config.json`, use that port instead.
 The server binds to `HOST=0.0.0.0` by default so phones can reach it on the LAN.
 
 ## Database location (outside repo)
