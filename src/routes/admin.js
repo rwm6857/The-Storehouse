@@ -369,6 +369,101 @@ function adminRoutes({ verifyPasscode }) {
     res.redirect('/admin/items');
   });
 
+  router.get('/bulk', requireAdmin, (req, res) => {
+    const economy = getEconomySettings();
+    const labels = getCurrencyLabels();
+    const actions = [
+      {
+        key: 'attendance',
+        label: `Attendance (+${economy.attendance_shekels} ${labels.shekels_label})`
+      },
+      {
+        key: 'participation',
+        label: `Participation (+${economy.participation_shekels} ${labels.shekels_label})`
+      },
+      {
+        key: 'memory',
+        label: `Memory Verse (+${economy.memory_verse_shekels} ${labels.shekels_label})`
+      },
+      {
+        key: 'bonus',
+        label: `Bonus (+${economy.bonus_min}-${economy.bonus_max} ${labels.shekels_label})`
+      }
+    ];
+
+    const actionKeys = new Set(actions.map((item) => item.key));
+    const activeAction = actionKeys.has(req.query.action) ? req.query.action : 'attendance';
+
+    const students = db.prepare(`
+      SELECT s.id, s.name
+      FROM students s
+      WHERE s.active = 1
+      ORDER BY s.name COLLATE NOCASE
+    `).all();
+
+    const lastId = Number.parseInt(req.query.last, 10);
+    const lastStudent = Number.isFinite(lastId) ? students.find((student) => student.id === lastId) : null;
+
+    res.render('pages/admin/bulk', {
+      actions,
+      activeAction,
+      students,
+      lastStudent,
+      page: 'bulk'
+    });
+  });
+
+  router.post('/bulk', requireAdmin, (req, res) => {
+    const studentId = Number.parseInt(req.body.student_id, 10);
+    const action = req.body.action || '';
+
+    if (!Number.isFinite(studentId)) {
+      return res.status(400).render('pages/error', { message: 'Select a student to continue.' });
+    }
+
+    const student = db.prepare('SELECT id FROM students WHERE id = ? AND active = 1').get(studentId);
+    if (!student) {
+      return res.status(404).render('pages/not-found');
+    }
+
+    const economy = getEconomySettings();
+    const earnMap = {
+      attendance: {
+        amount: economy.attendance_shekels,
+        reason: 'Attendance'
+      },
+      participation: {
+        amount: economy.participation_shekels,
+        reason: 'Participation'
+      },
+      memory: {
+        amount: economy.memory_verse_shekels,
+        reason: 'Memory Verse'
+      },
+      bonus: {
+        amount: null,
+        reason: 'Bonus'
+      }
+    };
+
+    if (!earnMap[action]) {
+      return res.status(400).render('pages/error', { message: 'Invalid bulk action.' });
+    }
+
+    let amount = earnMap[action].amount;
+    if (action === 'bonus') {
+      const min = Number.parseInt(economy.bonus_min, 10);
+      const max = Number.parseInt(economy.bonus_max, 10);
+      const safeMin = Number.isNaN(min) ? 0 : min;
+      const safeMax = Number.isNaN(max) ? safeMin : max;
+      const range = Math.max(safeMax - safeMin, 0);
+      amount = safeMin + Math.floor(Math.random() * (range + 1));
+    }
+
+    insertTransactionStmt.run(studentId, 'earn', earnMap[action].reason, amount, nowIso());
+    res.redirect(`/admin/bulk?action=${encodeURIComponent(action)}&last=${studentId}`);
+  });
+
   router.get('/settings', requireAdmin, (req, res) => {
     const economy = getEconomySettings();
     const labels = getCurrencyLabels();

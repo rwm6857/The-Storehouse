@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Determine Node version spec
         id: node-spec
@@ -137,6 +139,25 @@ jobs:
         with:
           name: Storehouse-win-x64
           path: dist\Storehouse-win-x64.zip
+
+      - name: Update latest tag
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f latest "${GITHUB_SHA}"
+          git push -f origin latest
+
+      - name: Publish Latest Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest (auto)
+          prerelease: true
+          target_commitish: ${{ github.sha }}
+          files: dist/Storehouse-win-x64.zip
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')

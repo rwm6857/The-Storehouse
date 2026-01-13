@@ -1,0 +1,37 @@
+<%- include('../../partials/header') %>
+<section class="panel">
+  <div class="panel-header">
+    <h2>Bulk Actions</h2>
+  </div>
+
+  <p>Select an action, then tap a student to apply it.</p>
+
+  <div class="filters">
+    <% actions.forEach((item) => { %>
+      <a class="chip <%= activeAction === item.key ? 'active' : '' %>" href="/admin/bulk?action=<%= item.key %>">
+        <%= item.label %>
+      </a>
+    <% }) %>
+  </div>
+
+  <% if (lastStudent) { %>
+    <div class="notice success">
+      Added <strong><%= actions.find((item) => item.key === activeAction)?.label || 'action' %></strong> for
+      <strong><%= lastStudent.name %></strong>.
+    </div>
+  <% } %>
+
+  <% if (!students.length) { %>
+    <div class="notice">No active students yet.</div>
+  <% } else { %>
+    <form method="post" action="/admin/bulk" class="bulk-grid">
+      <input type="hidden" name="action" value="<%= activeAction %>" />
+      <% students.forEach((student) => { %>
+        <button type="submit" name="student_id" value="<%= student.id %>" class="button big">
+          <%= student.name %>
+        </button>
+      <% }) %>
+    </form>
+  <% } %>
+</section>
+<%- include('../../partials/footer') %>

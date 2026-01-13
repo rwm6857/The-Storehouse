@@ -6,7 +6,8 @@
   <title><%= appName %></title>
   <link rel="stylesheet" href="/css/style.css" />
 </head>
-<body>
+<% const pageKey = typeof page !== 'undefined' && page ? page : ''; %>
+<body class="<%= pageKey ? `page-${pageKey}` : '' %>">
   <div class="sky-background"></div>
   <div class="page-wrap">
     <header class="site-header">
@@ -21,6 +22,7 @@
         <a href="/scan" class="<%= path.startsWith('/scan') ? 'active' : '' %>">Shop Mode</a>
         <% if (isAdmin) { %>
           <a href="/admin/students" class="<%= path.startsWith('/admin/students') ? 'active' : '' %>">Students</a>
+          <a href="/admin/bulk" class="<%= path.startsWith('/admin/bulk') ? 'active' : '' %>">Bulk Actions</a>
           <a href="/admin/items" class="<%= path.startsWith('/admin/items') ? 'active' : '' %>">Items</a>
           <a href="/admin/settings" class="<%= path.startsWith('/admin/settings') ? 'active' : '' %>">Settings</a>
           <form action="/admin/logout" method="post" class="inline-form">

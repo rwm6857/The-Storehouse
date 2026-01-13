@@ -108,7 +108,8 @@ function publicRoutes() {
       economy,
       items,
       transactions,
-      purchaseNotice
+      purchaseNotice,
+      page: 'student'
     });
   });
 

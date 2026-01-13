@@ -7,9 +7,9 @@ if %errorlevel% neq 0 (
   exit /b 1
 )
 
-set SCRIPT_DIR=%~dp0
-set ROOT_DIR=%SCRIPT_DIR%..
-set SERVICE_EXE=%ROOT_DIR%\service\StorehouseService.exe
+set "SCRIPT_DIR=%~dp0"
+for %%I in ("%SCRIPT_DIR%..") do set "ROOT_DIR=%%~fI"
+set "SERVICE_EXE=%ROOT_DIR%\service\StorehouseService.exe"
 
 if not exist "%SERVICE_EXE%" (
   echo Service wrapper not found: %SERVICE_EXE%

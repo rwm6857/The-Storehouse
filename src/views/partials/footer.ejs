@@ -2,7 +2,11 @@
     <footer class="site-footer">
       <div class="footer-inner">
         <span>Built for local use on the church network.</span>
-        <span>Keep this app on your trusted LAN.</span>
+        <% if (lanUrl) { %>
+          <span>Open <a href="<%= lanUrl %>"><%= lanUrl %></a> on your device's browser.</span>
+        <% } else { %>
+          <span>Open this app from another device on the same trusted LAN.</span>
+        <% } %>
       </div>
     </footer>
   </div>

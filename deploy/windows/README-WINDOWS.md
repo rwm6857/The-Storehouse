@@ -5,15 +5,16 @@ This folder describes the Windows ZIP artifact produced by the CI pipeline. The 
 The ZIP is built by the GitHub Actions workflow at `.github/workflows/windows-zip.yml`. Local Windows build scripts are intentionally not supported.
 
 ## Install
-1. Unzip the release to a stable location, for example `C:\Storehouse`.
-2. Create your config file:
+1. Download the **Latest** GitHub Release asset (tag `latest`) named `Storehouse-win-x64.zip`.
+2. Unzip the release to a stable location, for example `C:\Storehouse`.
+3. Create your config file:
    ```bat
    copy C:\Storehouse\app\.env.example C:\Storehouse\app\.env
    notepad C:\Storehouse\app\.env
    ```
    Set `ADMIN_PASSCODE` (required), and optionally `PORT`, `HOST`, and `DATABASE_PATH`.
-3. Open an **Administrator** PowerShell or Command Prompt.
-4. Run:
+4. Open an **Administrator** PowerShell or Command Prompt.
+5. Run:
    ```bat
    C:\Storehouse\scripts\install-service.bat
    ```

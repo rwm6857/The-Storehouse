@@ -17,6 +17,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
+function getLanIp() {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] || []) {
+      if (net.family === 'IPv4' && !net.internal && !net.address.startsWith('169.254')) {
+        return net.address;
+      }
+    }
+  }
+  return null;
+}
+
+const lanIp = getLanIp();
+
 const adminPasscode = process.env.ADMIN_PASSCODE;
 if (!adminPasscode) {
   throw new Error('ADMIN_PASSCODE is required. Set it in your .env file.');
@@ -56,6 +70,7 @@ app.use((req, res, next) => {
   res.locals.labels = getCurrencyLabels();
   res.locals.currencySymbols = { shekels: '\u20AA', talents: '\u05DB' };
   res.locals.currentPath = req.path;
+  res.locals.lanUrl = lanIp ? `http://${lanIp}:${PORT}` : null;
   next();
 });
 
@@ -71,19 +86,6 @@ app.use((req, res) => {
   res.status(404).render('pages/404');
 });
 
-function getLanIp() {
-  const nets = os.networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name] || []) {
-      if (net.family === 'IPv4' && !net.internal && !net.address.startsWith('169.254')) {
-        return net.address;
-      }
-    }
-  }
-  return null;
-}
-
-const lanIp = getLanIp();
 const terminalUi = createTerminalUi({
   appName: 'The Storehouse',
   host: HOST,

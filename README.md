@@ -23,11 +23,12 @@ cp .env.example .env
 4. Edit `.env` with your admin passcode and (optional) database path.
 
 ## Windows install (production)
-For a Windows 11 install that does **not** require Git/Node/npm/Python, use the ZIP artifact produced by CI. See the step-by-step guide in `deploy/windows/README-WINDOWS.md`.
+For a Windows 11 install that does **not** require Git/Node/npm/Python, use the ZIP artifact produced by CI. The easiest option is the **Latest** GitHub Release (tag `latest`). See the step-by-step guide in `deploy/windows/README-WINDOWS.md`.
 
 ## Build & release (Windows ZIP)
 The only supported Windows packaging flow is the GitHub Actions workflow in `.github/workflows/windows-zip.yml`.
 - On push to `main`, it builds `Storehouse-win-x64.zip` as a workflow artifact.
+- On push to `main`, it also updates the **Latest** GitHub Release (tag `latest`) with the ZIP.
 - On tags like `v1.2.3`, it also publishes a GitHub Release with the ZIP.
 
 ## Run
