@@ -12,7 +12,7 @@ const LAYOUT = {
   borderInsetMm: 1,
   borderWidthMm: 0.3,
   qr: { sizeMm: 40, leftInsetMm: 6 },
-  text: { leftInsetMm: 6, rightInsetMm: 6, gapBelowQrMm: 4, footerGapMm: 2 },
+  text: { leftInsetMm: 6, rightInsetMm: 6, gapFromQrMm: 6, footerGapMm: 2 },
   name: { maxPt: 16, minPt: 12 },
   footer: { sizePt: 8 }
 };
@@ -140,14 +140,17 @@ async function generateStudentCardsPdf({ students, baseUrl }) {
     const qrSize = mmToPt(LAYOUT.qr.sizeMm);
     const qrX = cardX + mmToPt(LAYOUT.qr.leftInsetMm);
 
-    const gapBelowQr = mmToPt(LAYOUT.text.gapBelowQrMm);
     const footerGap = mmToPt(LAYOUT.text.footerGapMm);
 
-    const textMaxWidth = cardWidth - mmToPt(LAYOUT.text.leftInsetMm + LAYOUT.text.rightInsetMm);
-    const fittedName = fitText(fontBold, student.name, textMaxWidth, LAYOUT.name.maxPt, LAYOUT.name.minPt);
-    const blockHeight = qrSize + gapBelowQr + fittedName.size + footerGap + LAYOUT.footer.sizePt;
-    const blockTop = cardY + (cardHeight + blockHeight) / 2;
-    const qrY = blockTop - qrSize;
+    const textLeft = qrX + qrSize + mmToPt(LAYOUT.text.gapFromQrMm);
+    const textMaxWidth = cardX + cardWidth - mmToPt(LAYOUT.text.rightInsetMm) - textLeft;
+    const safeTextWidth = Math.max(10, textMaxWidth);
+    const fittedName = fitText(fontBold, student.name, safeTextWidth, LAYOUT.name.maxPt, LAYOUT.name.minPt);
+    const textBlockHeight = fittedName.size + footerGap + LAYOUT.footer.sizePt;
+
+    const contentHeight = Math.max(qrSize, textBlockHeight);
+    const contentTop = cardY + (cardHeight + contentHeight) / 2;
+    const qrY = contentTop - qrSize;
     page.drawImage(qrImage, {
       x: qrX,
       y: qrY,
@@ -155,8 +158,7 @@ async function generateStudentCardsPdf({ students, baseUrl }) {
       height: qrSize
     });
 
-    const textLeft = cardX + mmToPt(LAYOUT.text.leftInsetMm);
-    const nameY = qrY - gapBelowQr - fittedName.size;
+    const nameY = contentTop - fittedName.size;
 
     page.drawText(fittedName.text, {
       x: textLeft,
