@@ -14,6 +14,7 @@ DisableDirPage=no
 UsePreviousAppDir=yes
 PrivilegesRequired=admin
 OutputDir=dist
+SourceDir=..\..
 OutputBaseFilename=TheStorehouse-Setup
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
