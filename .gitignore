@@ -76,6 +76,9 @@ yarn-integrity
 .env.*
 !.env.example
 
+# macOS
+.DS_Store
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
