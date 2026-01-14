@@ -1,7 +1,9 @@
 const express = require('express');
 const QRCode = require('qrcode');
 const { db, getEconomySettings, ensureTalentsRow } = require('../db');
-const { normalizeRarity, getRarityTokens, hexToRgba } = require('../lib/rarity');
+const { normalizeRarity, getRarityTokens } = require('../lib/rarity');
+const { contributeToGroupBuy } = require('../lib/groupBuy');
+const requireAdmin = require('../middleware/requireAdmin');
 
 function nowIso() {
   return new Date().toISOString();
@@ -38,7 +40,7 @@ function publicRoutes() {
 
   const activeItemsStmt = db.prepare(`
     SELECT * FROM items
-    WHERE active = 1 AND inventory > 0
+    WHERE active = 1 AND (type = 'group_buy' OR inventory > 0)
     ORDER BY sort_order ASC, name COLLATE NOCASE ASC
   `);
 
@@ -75,16 +77,26 @@ function publicRoutes() {
     const items = rawItems.map((item) => {
       const rarity = normalizeRarity(item.rarity);
       const rarityTokens = getRarityTokens(rarity);
-      const rarityBorderSoft = rarityTokens ? hexToRgba(rarityTokens.border, 0.25) : null;
       const price = Number.parseInt(item.price_shekels, 10) || 0;
-      const canAfford = student.balance >= price;
-      const soldOut = item.inventory <= 0;
-      const canBuy = canAfford && !soldOut;
+      const type = (item.type || 'standard').toLowerCase();
+      const goalAmount = Number.parseInt(item.goal_amount, 10) || 0;
+      const buyInCost = Number.parseInt(item.buy_in_cost, 10) || 0;
+      const progressAmount = Number.parseInt(item.progress_amount, 10) || 0;
+      const isComplete = type === 'group_buy' && (progressAmount >= goalAmount);
+      const canAfford = type === 'group_buy' ? student.balance >= buyInCost : student.balance >= price;
+      const soldOut = type === 'group_buy' ? false : item.inventory <= 0;
+      const canBuy = type === 'group_buy'
+        ? buyInCost > 0 && !isComplete && canAfford
+        : canAfford && !soldOut;
       return {
         ...item,
         rarity,
         rarityTokens,
-        rarityBorderSoft,
+        type,
+        goalAmount,
+        buyInCost,
+        progressAmount,
+        isComplete,
         canAfford,
         soldOut,
         canBuy
@@ -94,11 +106,12 @@ function publicRoutes() {
     const purchasedId = Number.parseInt(req.query.purchased, 10);
     let purchaseNotice = null;
     if (Number.isFinite(purchasedId)) {
-      const purchasedItem = db.prepare('SELECT name, price_shekels FROM items WHERE id = ?').get(purchasedId);
+      const purchasedItem = db.prepare('SELECT name, price_shekels, type FROM items WHERE id = ?').get(purchasedId);
       if (purchasedItem) {
         purchaseNotice = {
           name: purchasedItem.name,
-          price: purchasedItem.price_shekels
+          price: purchasedItem.price_shekels,
+          type: purchasedItem.type || 'standard'
         };
       }
     }
@@ -113,7 +126,7 @@ function publicRoutes() {
     });
   });
 
-  router.post('/s/:qr_id/earn', (req, res) => {
+  router.post('/s/:qr_id/earn', requireAdmin, (req, res) => {
     const student = studentByQrStmt.get(req.params.qr_id);
     if (!student) {
       return res.status(404).render('pages/not-found');
@@ -175,6 +188,9 @@ function publicRoutes() {
       if (!item) {
         return { error: 'Item is not available.' };
       }
+      if ((item.type || 'standard') !== 'standard') {
+        return { error: 'Item must be purchased via group buy.' };
+      }
       if (item.inventory <= 0) {
         return { error: 'Item is out of stock.' };
       }
@@ -194,6 +210,25 @@ function publicRoutes() {
     });
 
     const result = purchase();
+    if (result.error) {
+      return res.status(400).render('pages/error', { message: result.error });
+    }
+
+    return res.redirect(`/s/${student.qr_id}?purchased=${itemId}`);
+  });
+
+  router.post('/s/:qr_id/group-buy/:id/contribute', (req, res) => {
+    const student = studentByQrStmt.get(req.params.qr_id);
+    if (!student) {
+      return res.status(404).render('pages/not-found');
+    }
+
+    const itemId = Number.parseInt(req.params.id, 10);
+    if (!itemId) {
+      return res.status(400).render('pages/error', { message: 'Invalid item selection.' });
+    }
+
+    const result = contributeToGroupBuy(student.id, itemId);
     if (result.error) {
       return res.status(400).render('pages/error', { message: result.error });
     }

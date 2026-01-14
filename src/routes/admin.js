@@ -10,6 +10,7 @@ const {
   ensureTalentsRow
 } = require('../db');
 const { normalizeRarity } = require('../lib/rarity');
+const { exportStorehouseData, importStorehouseData } = require('../lib/dataTransfer');
 const { generateStudentCardsPdf } = require('../lib/studentCardsPdf');
 
 function nowIso() {
@@ -185,7 +186,8 @@ function adminRoutes({ verifyPasscode }) {
       LIMIT 25
     `).all(studentId);
 
-    res.render('pages/admin/student-detail', { student, transactions });
+    const economy = getEconomySettings();
+    res.render('pages/admin/student-detail', { student, transactions, economy });
   });
 
   router.get('/students/:id/edit', requireAdmin, (req, res) => {
@@ -343,22 +345,66 @@ function adminRoutes({ verifyPasscode }) {
     const price = Number.parseInt(req.body.price_shekels, 10);
     const category = (req.body.category || 'snack').trim();
     const active = req.body.active === 'on' ? 1 : 0;
-    const sortOrder = Number.parseInt(req.body.sort_order, 10) || 0;
     const inventory = Number.parseInt(req.body.inventory, 10);
     const rarity = normalizeRarity(req.body.rarity);
+    const type = (req.body.type || 'standard').toString().trim().toLowerCase();
+    const goalAmount = Number.parseInt(req.body.goal_amount, 10);
+    const buyInCost = Number.parseInt(req.body.buy_in_cost, 10);
+    const progressAmount = Number.parseInt(req.body.progress_amount, 10);
 
-    if (!name || !Number.isFinite(price) || price < 0 || !Number.isFinite(inventory) || inventory < 0) {
+    const isGroupBuy = type === 'group_buy';
+    const normalizedType = isGroupBuy ? 'group_buy' : 'standard';
+    const safeProgress = Number.isFinite(progressAmount) && progressAmount >= 0 ? progressAmount : 0;
+    const completedAt = isGroupBuy && Number.isFinite(goalAmount) && safeProgress >= goalAmount ? nowIso() : null;
+
+    if (!name) {
       const items = db.prepare('SELECT * FROM items ORDER BY sort_order ASC, name COLLATE NOCASE ASC').all();
       return res.status(400).render('pages/admin/items', {
         items,
-        error: 'Name, non-negative price, and non-negative inventory are required.'
+        error: 'Name is required.'
       });
     }
 
+    if (isGroupBuy) {
+      if (!Number.isFinite(goalAmount) || goalAmount <= 0 || !Number.isFinite(buyInCost) || buyInCost <= 0) {
+        const items = db.prepare('SELECT * FROM items ORDER BY sort_order ASC, name COLLATE NOCASE ASC').all();
+        return res.status(400).render('pages/admin/items', {
+          items,
+          error: 'Group buy items require a goal amount and buy-in cost greater than 0.'
+        });
+      }
+    } else if (!Number.isFinite(price) || price < 0 || !Number.isFinite(inventory) || inventory < 0) {
+      const items = db.prepare('SELECT * FROM items ORDER BY sort_order ASC, name COLLATE NOCASE ASC').all();
+      return res.status(400).render('pages/admin/items', {
+        items,
+        error: 'Standard items require a non-negative price and inventory.'
+      });
+    }
+
+    const minOrderRow = db.prepare('SELECT MIN(sort_order) AS minOrder FROM items').get();
+    const nextSortOrder = Number.isFinite(minOrderRow?.minOrder) ? minOrderRow.minOrder - 1 : 0;
+
     db.prepare(`
-      INSERT INTO items (name, price_shekels, inventory, active, sort_order, category, rarity, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(name, price, inventory, active, sortOrder, category || 'snack', rarity, nowIso());
+      INSERT INTO items (
+        name, price_shekels, inventory, active, sort_order, category, rarity,
+        type, goal_amount, buy_in_cost, progress_amount, completed_at, created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      name,
+      isGroupBuy ? buyInCost : price,
+      isGroupBuy ? 0 : inventory,
+      active,
+      nextSortOrder,
+      category || 'snack',
+      rarity,
+      normalizedType,
+      isGroupBuy ? goalAmount : null,
+      isGroupBuy ? buyInCost : null,
+      isGroupBuy ? safeProgress : 0,
+      completedAt,
+      nowIso()
+    );
 
     res.redirect('/admin/items');
   });
@@ -378,11 +424,59 @@ function adminRoutes({ verifyPasscode }) {
     const price = Number.parseInt(req.body.price_shekels, 10);
     const category = (req.body.category || 'snack').trim();
     const active = req.body.active === 'on' ? 1 : 0;
-    const sortOrder = Number.parseInt(req.body.sort_order, 10) || 0;
     const inventory = Number.parseInt(req.body.inventory, 10);
     const rarity = normalizeRarity(req.body.rarity);
+    const type = (req.body.type || 'standard').toString().trim().toLowerCase();
+    const goalAmount = Number.parseInt(req.body.goal_amount, 10);
+    const buyInCost = Number.parseInt(req.body.buy_in_cost, 10);
+    const progressAmount = Number.parseInt(req.body.progress_amount, 10);
 
-    if (!name || !Number.isFinite(price) || price < 0 || !Number.isFinite(inventory) || inventory < 0) {
+    const isGroupBuy = type === 'group_buy';
+    const normalizedType = isGroupBuy ? 'group_buy' : 'standard';
+    const safeProgress = Number.isFinite(progressAmount) && progressAmount >= 0 ? progressAmount : 0;
+    const completedAt = isGroupBuy && Number.isFinite(goalAmount) && safeProgress >= goalAmount ? nowIso() : null;
+
+    if (!name) {
+      return res.status(400).render('pages/admin/item-edit', {
+        item: {
+          id: itemId,
+          name,
+          price_shekels: isGroupBuy ? buyInCost : price,
+          inventory: isGroupBuy ? 0 : inventory,
+          category,
+          rarity,
+          active,
+          type: normalizedType,
+          goal_amount: isGroupBuy ? goalAmount : null,
+          buy_in_cost: isGroupBuy ? buyInCost : null,
+          progress_amount: isGroupBuy ? safeProgress : 0,
+          completed_at: completedAt
+        },
+        error: 'Name is required.'
+      });
+    }
+
+    if (isGroupBuy) {
+      if (!Number.isFinite(goalAmount) || goalAmount <= 0 || !Number.isFinite(buyInCost) || buyInCost <= 0) {
+        return res.status(400).render('pages/admin/item-edit', {
+        item: {
+          id: itemId,
+          name,
+          price_shekels: buyInCost,
+          inventory: 0,
+          category,
+          rarity,
+          active,
+          type: normalizedType,
+          goal_amount: goalAmount,
+          buy_in_cost: buyInCost,
+          progress_amount: safeProgress,
+          completed_at: completedAt
+          },
+          error: 'Group buy items require a goal amount and buy-in cost greater than 0.'
+        });
+      }
+    } else if (!Number.isFinite(price) || price < 0 || !Number.isFinite(inventory) || inventory < 0) {
       return res.status(400).render('pages/admin/item-edit', {
         item: {
           id: itemId,
@@ -392,17 +486,35 @@ function adminRoutes({ verifyPasscode }) {
           category,
           rarity,
           active,
-          sort_order: sortOrder
+          type: normalizedType,
+          goal_amount: null,
+          buy_in_cost: null,
+          progress_amount: 0,
+          completed_at: null
         },
-        error: 'Name, non-negative price, and non-negative inventory are required.'
+        error: 'Standard items require a non-negative price and inventory.'
       });
     }
 
     db.prepare(`
       UPDATE items
-      SET name = ?, price_shekels = ?, inventory = ?, category = ?, rarity = ?, active = ?, sort_order = ?
+      SET name = ?, price_shekels = ?, inventory = ?, category = ?, rarity = ?, active = ?,
+          type = ?, goal_amount = ?, buy_in_cost = ?, progress_amount = ?, completed_at = ?
       WHERE id = ?
-    `).run(name, price, inventory, category || 'snack', rarity, active, sortOrder, itemId);
+    `).run(
+      name,
+      isGroupBuy ? buyInCost : price,
+      isGroupBuy ? 0 : inventory,
+      category || 'snack',
+      rarity,
+      active,
+      normalizedType,
+      isGroupBuy ? goalAmount : null,
+      isGroupBuy ? buyInCost : null,
+      isGroupBuy ? safeProgress : 0,
+      completedAt,
+      itemId
+    );
 
     res.redirect('/admin/items');
   });
@@ -411,6 +523,43 @@ function adminRoutes({ verifyPasscode }) {
     const itemId = Number.parseInt(req.params.id, 10);
     db.prepare('DELETE FROM items WHERE id = ?').run(itemId);
     res.redirect('/admin/items');
+  });
+
+  router.post('/items/:id/move', requireAdmin, (req, res) => {
+    const itemId = Number.parseInt(req.params.id, 10);
+    const direction = (req.body.direction || '').toLowerCase();
+    if (!itemId || !['up', 'down'].includes(direction)) {
+      return res.redirect('/admin/items');
+    }
+
+    const reorder = db.transaction(() => {
+      const items = db.prepare(`
+        SELECT id
+        FROM items
+        ORDER BY sort_order ASC, name COLLATE NOCASE ASC
+      `).all();
+      const index = items.findIndex((item) => item.id === itemId);
+      if (index === -1) {
+        return false;
+      }
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= items.length) {
+        return false;
+      }
+
+      const orderedIds = items.map((item) => item.id);
+      [orderedIds[index], orderedIds[targetIndex]] = [orderedIds[targetIndex], orderedIds[index]];
+
+      const update = db.prepare('UPDATE items SET sort_order = ? WHERE id = ?');
+      orderedIds.forEach((id, order) => {
+        update.run(order, id);
+      });
+
+      return true;
+    });
+
+    reorder();
+    return res.redirect('/admin/items');
   });
 
   router.get('/bulk', requireAdmin, (req, res) => {
@@ -511,7 +660,16 @@ function adminRoutes({ verifyPasscode }) {
   router.get('/settings', requireAdmin, (req, res) => {
     const economy = getEconomySettings();
     const labels = getCurrencyLabels();
-    res.render('pages/admin/settings', { economy, labels, error: null, saved: false });
+    const imported = req.query.imported === '1';
+    const importError = req.query.import_error ? decodeURIComponent(req.query.import_error) : null;
+    res.render('pages/admin/settings', {
+      economy,
+      labels,
+      error: null,
+      saved: false,
+      imported,
+      importError
+    });
   });
 
   router.post('/settings', requireAdmin, (req, res) => {
@@ -535,7 +693,9 @@ function adminRoutes({ verifyPasscode }) {
         economy,
         labels,
         error: 'All economy values must be zero or higher.',
-        saved: false
+        saved: false,
+        imported: false,
+        importError: null
       });
     }
 
@@ -544,7 +704,9 @@ function adminRoutes({ verifyPasscode }) {
         economy,
         labels,
         error: 'Bonus max must be greater than or equal to bonus min.',
-        saved: false
+        saved: false,
+        imported: false,
+        importError: null
       });
     }
 
@@ -555,8 +717,35 @@ function adminRoutes({ verifyPasscode }) {
       economy,
       labels,
       error: null,
-      saved: true
+      saved: true,
+      imported: false,
+      importError: null
     });
+  });
+
+  router.get('/transfer/export', requireAdmin, (req, res) => {
+    const payload = exportStorehouseData();
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=storehouse-export-${stamp}.json`);
+    res.send(JSON.stringify(payload, null, 2));
+  });
+
+  router.post('/transfer/import', requireAdmin, (req, res) => {
+    const payload = (req.body.payload || '').trim();
+    if (!payload) {
+      return res.redirect('/admin/settings?import_error=Missing%20JSON%20payload');
+    }
+
+    try {
+      const data = JSON.parse(payload);
+      importStorehouseData(data);
+    } catch (error) {
+      const message = encodeURIComponent(error.message || 'Invalid JSON payload');
+      return res.redirect(`/admin/settings?import_error=${message}`);
+    }
+
+    return res.redirect('/admin/settings?imported=1');
   });
 
   return router;

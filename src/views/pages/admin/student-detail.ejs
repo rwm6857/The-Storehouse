@@ -38,6 +38,56 @@
   </div>
 </section>
 
+<section class="panel admin-panel">
+  <h3>Add <%= labels.shekels_label %></h3>
+  <div class="earn-grid">
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="attendance" />
+      <button class="button big" type="submit">+ Attendance (<%= economy.attendance_shekels %>)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="participation" />
+      <button class="button big" type="submit">+ Participation (<%= economy.participation_shekels %>)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="memory" />
+      <button class="button big" type="submit">+ Memory Verse (<%= economy.memory_verse_shekels %>)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="bonus" />
+      <button class="button big" type="submit">🎲 Bonus</button>
+    </form>
+  </div>
+</section>
+
+<section class="panel admin-panel">
+  <h3>Admin Controls</h3>
+  <div class="admin-actions">
+    <form method="post" action="/admin/students/<%= student.id %>/adjust" class="inline-form">
+      <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+      <input type="number" name="amount" class="text-input" placeholder="Amount" required />
+      <input type="text" name="reason" class="text-input" placeholder="Reason" required />
+      <button class="button" type="submit">Manual Adjust</button>
+    </form>
+
+    <form method="post" action="/admin/students/<%= student.id %>/undo" class="inline-form">
+      <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+      <button class="button" type="submit">Undo Last Transaction</button>
+    </form>
+
+    <form method="post" action="/admin/students/<%= student.id %>/convert" class="inline-form">
+      <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+      <button class="button" type="submit">Convert <%= economy.shekels_per_talent %><%= currencySymbols.shekels %> <%= labels.shekels_label %> to <%= currencySymbols.talents %>1 <%= labels.talents_label %></button>
+    </form>
+  </div>
+  <a class="button icon-button" href="/admin/students/<%= student.id %>/edit" aria-label="Edit student" title="Edit student">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25z"></path>
+      <path d="M20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.13z"></path>
+    </svg>
+  </a>
+</section>
+
 <section class="panel">
   <h3>Recent Transactions</h3>
   <% if (transactions.length === 0) { %>

@@ -20,24 +20,6 @@
     </div>
   </div>
 
-  <div class="earn-grid">
-    <form method="post" action="/s/<%= student.qr_id %>/earn">
-      <input type="hidden" name="type" value="attendance" />
-      <button class="button big" type="submit">+ Attendance (<%= economy.attendance_shekels %>)</button>
-    </form>
-    <form method="post" action="/s/<%= student.qr_id %>/earn">
-      <input type="hidden" name="type" value="participation" />
-      <button class="button big" type="submit">+ Participation (<%= economy.participation_shekels %>)</button>
-    </form>
-    <form method="post" action="/s/<%= student.qr_id %>/earn">
-      <input type="hidden" name="type" value="memory" />
-      <button class="button big" type="submit">+ Memory Verse (<%= economy.memory_verse_shekels %>)</button>
-    </form>
-    <form method="post" action="/s/<%= student.qr_id %>/earn">
-      <input type="hidden" name="type" value="bonus" />
-      <button class="button big" type="submit">🎲 Bonus</button>
-    </form>
-  </div>
 </section>
 
 <section class="panel">
@@ -49,68 +31,94 @@
     <% items.forEach((item) => { %>
       <% const rarity = item.rarity || 'common'; %>
       <% const isCommon = rarity === 'common'; %>
+      <% const isGroupBuy = item.type === 'group_buy'; %>
+      <% const isComplete = Boolean(item.isComplete); %>
       <% const canBuy = Boolean(item.canBuy); %>
       <% const soldOut = Boolean(item.soldOut); %>
       <% const costText = `${item.price_shekels}${currencySymbols.shekels}`; %>
+      <% const buyInText = `${item.buyInCost}${currencySymbols.shekels}`; %>
+      <% const progressText = `${item.progressAmount} / ${item.goalAmount} ${labels.shekels_label}`; %>
       <div
-        class="item-card shop-card rarity-<%= rarity %><%= isCommon ? '' : ' has-rarity' %><%= canBuy ? ' is-clickable' : ' is-disabled' %>"
+        class="item-card shop-card rarity-<%= rarity %><%= isCommon ? '' : ' has-rarity' %><%= canBuy ? ' is-clickable' : ' is-disabled' %><%= isGroupBuy ? ' group-buy-card' : '' %><%= isComplete ? ' is-complete' : '' %>"
         role="button"
         tabindex="0"
-        aria-label="Buy <%= item.name %>"
+        aria-label="<%= isGroupBuy ? 'Contribute to' : 'Buy' %> <%= item.name %>"
         aria-disabled="<%= canBuy ? 'false' : 'true' %>"
         data-can-buy="<%= canBuy ? 'true' : 'false' %>"
         data-form-id="buy-form-<%= item.id %>"
         <% if (item.rarityTokens) { %>
-          style="--rarity-spine-from: <%= item.rarityTokens.spineFrom %>; --rarity-spine-to: <%= item.rarityTokens.spineTo %>; --rarity-border: <%= item.rarityTokens.border %>; --rarity-border-soft: <%= item.rarityBorderSoft %>; --rarity-glow: <%= item.rarityTokens.glow %>;"
+          style="--rarity-base: <%= item.rarityTokens.base %>; --rarity-accent: <%= item.rarityTokens.accent %>; --rarity-border: <%= item.rarityTokens.border %>; --rarity-strip-from: <%= item.rarityTokens.stripFrom %>; --rarity-strip-to: <%= item.rarityTokens.stripTo %>; --rarity-metal-from: <%= item.rarityTokens.labelFrom %>; --rarity-metal-to: <%= item.rarityTokens.labelTo %>; --rarity-button-bg: <%= item.rarityTokens.buttonBg %>; --rarity-button-text: <%= item.rarityTokens.buttonText %>; --rarity-button-border: <%= item.rarityTokens.buttonBorder %>; --rarity-shadow: <%= item.rarityTokens.shadow %>; --rarity-hover-shadow: <%= item.rarityTokens.hoverShadow %>; --rarity-glow: <%= item.rarityTokens.glow %>; --rarity-focus: <%= item.rarityTokens.focus %>;"
         <% } %>
       >
         <% if (!isCommon) { %>
-          <span class="rarity-spine" aria-hidden="true"></span>
-          <span class="item-cost-chip"><%= costText %></span>
-          <span class="rarity-crest rarity-<%= rarity %>" aria-hidden="true">
-            <% if (rarity === 'uncommon') { %>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3c4 0 7 3 7 7 0 6-7 11-7 11S5 16 5 10c0-4 3-7 7-7z"></path>
-                <path d="M12 7c-1.8 1.7-2.5 4.1-2.4 6.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
-              </svg>
-            <% } else if (rarity === 'rare') { %>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3l7 7-7 11L5 10l7-7z"></path>
-              </svg>
-            <% } else { %>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 8l4 3 4-6 4 6 4-3v9H4V8z"></path>
-                <path d="M4 17h16v2H4z"></path>
-              </svg>
-            <% } %>
-          </span>
+          <span class="rarity-strip" aria-hidden="true"></span>
         <% } %>
         <div class="item-card-content">
           <div class="item-text">
-            <div class="item-title">
+            <div class="item-header">
               <h4><%= item.name %></h4>
               <% if (!isCommon) { %>
-                <span class="rarity-label"><%= rarity.replace(/^\w/, (c) => c.toUpperCase()) %></span>
+                <span class="rarity-icon rarity-icon-<%= rarity %>" aria-hidden="true">
+                  <% if (rarity === 'uncommon') { %>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3c4 0 7 3 7 7 0 6-7 11-7 11S5 16 5 10c0-4 3-7 7-7z"></path>
+                      <path d="M12 7c-1.8 1.7-2.5 4.1-2.4 6.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+                    </svg>
+                  <% } else if (rarity === 'rare') { %>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="rarity-metal-gradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="var(--rarity-metal-from)"></stop>
+                          <stop offset="100%" stop-color="var(--rarity-metal-to)"></stop>
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 3l7 7-7 11L5 10l7-7z" fill="url(#rarity-metal-gradient)"></path>
+                    </svg>
+                  <% } else { %>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="rarity-metal-gradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="var(--rarity-metal-from)"></stop>
+                          <stop offset="100%" stop-color="var(--rarity-metal-to)"></stop>
+                        </linearGradient>
+                      </defs>
+                      <path d="M4 8l4 3 4-6 4 6 4-3v9H4V8z" fill="url(#rarity-metal-gradient)"></path>
+                      <path d="M4 17h16v2H4z" fill="url(#rarity-metal-gradient)"></path>
+                    </svg>
+                  <% } %>
+                </span>
               <% } %>
             </div>
-            <% if (isCommon) { %>
-              <p class="muted"><%= item.category %> • Cost: <%= costText %></p>
-            <% } else { %>
-              <div class="item-meta-row">
-                <span class="muted"><%= item.category %></span>
+            <span class="rarity-label rarity-<%= rarity %>"><%= rarity.replace(/^\w/, (c) => c.toUpperCase()) %></span>
+            <div class="item-meta-row">
+              <span class="muted"><%= item.category %></span>
+            </div>
+            <% if (isGroupBuy) { %>
+              <div class="group-buy-progress">
+                <div class="group-buy-bar" role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="<%= item.goalAmount %>"
+                  aria-valuenow="<%= item.progressAmount %>">
+                  <span style="width: <%= Math.min(100, Math.round((item.goalAmount ? (item.progressAmount / item.goalAmount) * 100 : 0))) %>%"></span>
+                </div>
+                <div class="group-buy-text"><%= progressText %></div>
               </div>
             <% } %>
           </div>
-          <form method="post" action="/s/<%= student.qr_id %>/buy" id="buy-form-<%= item.id %>" class="buy-form">
-            <input type="hidden" name="item_id" value="<%= item.id %>" />
-            <button class="button buy-button<%= isCommon ? '' : ' rarity-accent' %>" type="submit" <%= canBuy ? '' : 'disabled' %>>
-              <% if (!canBuy) { %>
-                <%= soldOut ? 'Sold out' : `Not enough ${currencySymbols.shekels}` %>
-              <% } else { %>
-                Buy • <%= costText %>
-              <% } %>
-            </button>
-          </form>
+          <% if (isGroupBuy && isComplete) { %>
+            <div class="group-buy-complete">COMPLETE</div>
+          <% } else { %>
+            <form method="post" action="<%= isGroupBuy ? `/s/${student.qr_id}/group-buy/${item.id}/contribute` : `/s/${student.qr_id}/buy` %>" id="buy-form-<%= item.id %>" class="buy-form">
+              <input type="hidden" name="item_id" value="<%= item.id %>" />
+              <button class="button buy-button<%= isCommon ? '' : ' rarity-accent' %>" type="submit" <%= canBuy ? '' : 'disabled' %>>
+                <% if (!canBuy) { %>
+                  <%= soldOut ? 'Sold out' : `Not enough ${currencySymbols.shekels}` %>
+                <% } else { %>
+                  Buy &mdash; <%= isGroupBuy ? buyInText : costText %>
+                <% } %>
+              </button>
+            </form>
+          <% } %>
         </div>
       </div>
     <% }) %>
@@ -133,36 +141,6 @@
     </ul>
   <% } %>
 </section>
-
-<% if (isAdmin) { %>
-  <section class="panel admin-panel">
-    <h3>Admin Controls</h3>
-    <div class="admin-actions">
-      <form method="post" action="/admin/students/<%= student.id %>/adjust" class="inline-form">
-        <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
-        <input type="number" name="amount" class="text-input" placeholder="Amount" required />
-        <input type="text" name="reason" class="text-input" placeholder="Reason" required />
-        <button class="button" type="submit">Manual Adjust</button>
-      </form>
-
-      <form method="post" action="/admin/students/<%= student.id %>/undo" class="inline-form">
-        <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
-        <button class="button" type="submit">Undo Last Transaction</button>
-      </form>
-
-      <form method="post" action="/admin/students/<%= student.id %>/convert" class="inline-form">
-        <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
-        <button class="button" type="submit">Convert <%= economy.shekels_per_talent %><%= currencySymbols.shekels %> <%= labels.shekels_label %> to <%= currencySymbols.talents %>1 <%= labels.talents_label %></button>
-      </form>
-    </div>
-    <a class="button icon-button" href="/admin/students/<%= student.id %>/edit" aria-label="Edit student" title="Edit student">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25z"></path>
-        <path d="M20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.13z"></path>
-      </svg>
-    </a>
-  </section>
-<% } %>
 
 <div class="toast" id="shopToast" role="status" aria-live="polite"></div>
 <script>
@@ -213,7 +191,8 @@
   if (purchaseNotice) {
     const toast = document.getElementById('shopToast');
     if (toast) {
-      toast.textContent = `Purchased ${purchaseNotice.name} (${purchaseNotice.price}<%= currencySymbols.shekels %>)`;
+      const verb = purchaseNotice.type === 'group_buy' ? 'Contributed to' : 'Purchased';
+      toast.textContent = `${verb} ${purchaseNotice.name} (${purchaseNotice.price}<%= currencySymbols.shekels %>)`;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2800);
     }

@@ -9,6 +9,10 @@
   --highlight: #fef6d8;
   --text: #2b2b2b;
   --muted: #5a6b7b;
+  --rarity-silver-from: #f8fafc;
+  --rarity-silver-to: #9ca3af;
+  --rarity-gold-from: #fff1c2;
+  --rarity-gold-to: #d4a445;
 }
 
 * {
@@ -521,13 +525,13 @@ select.text-input {
   gap: 12px;
   box-shadow: inset 0 1px 0 #ffffff;
   position: relative;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
-.item-title {
+.item-header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
@@ -536,6 +540,12 @@ select.text-input {
   flex-direction: column;
   gap: 12px;
   height: 100%;
+}
+
+.item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .item-meta-row {
@@ -547,66 +557,30 @@ select.text-input {
 
 .rarity-label {
   font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+  display: inline-block;
 }
 
 .item-card.has-rarity {
   border: 2px solid var(--rarity-border);
-  box-shadow: inset 0 0 0 1px var(--rarity-border-soft), 0 8px 18px var(--rarity-glow);
-  padding-left: 20px;
+  padding-top: 18px;
 }
 
-.rarity-spine {
+.rarity-strip {
   position: absolute;
-  left: 0;
   top: 0;
-  bottom: 0;
-  width: 6px;
-  border-radius: 12px 0 0 12px;
-  background: linear-gradient(180deg, var(--rarity-spine-from), var(--rarity-spine-to));
-}
-
-.item-cost-chip {
-  position: absolute;
-  top: 10px;
-  left: 12px;
-  background: #ffffff;
-  border: 1px solid var(--rarity-border);
-  color: var(--accent-dark);
-  font-weight: 700;
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 999px;
-  box-shadow: 0 2px 6px var(--rarity-glow);
-}
-
-.rarity-crest {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid var(--rarity-border);
-  background: #ffffff;
-  color: var(--rarity-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px var(--rarity-glow);
-}
-
-.rarity-crest svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(90deg, var(--rarity-strip-from), var(--rarity-strip-to));
 }
 
 .item-card.has-rarity .item-card-content {
-  padding-top: 26px;
+  gap: 10px;
 }
 
 .item-card.is-clickable {
@@ -614,9 +588,19 @@ select.text-input {
 }
 
 @media (hover: hover) {
-  .item-card.has-rarity.is-clickable:hover {
+  .item-card.rarity-uncommon.is-clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px var(--rarity-hover-shadow);
+  }
+
+  .item-card.rarity-rare.is-clickable:hover {
     transform: translateY(-2px);
-    box-shadow: inset 0 0 0 1px var(--rarity-border-soft), 0 12px 22px var(--rarity-glow);
+    box-shadow: 0 12px 22px var(--rarity-hover-shadow);
+  }
+
+  .item-card.rarity-legendary.is-clickable:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 16px 28px var(--rarity-hover-shadow), 0 0 18px var(--rarity-glow);
   }
 }
 
@@ -625,13 +609,18 @@ select.text-input {
 }
 
 .item-card:focus-visible {
-  outline: 3px solid rgba(42, 79, 115, 0.35);
+  outline: 3px solid var(--rarity-focus, rgba(42, 79, 115, 0.35));
   outline-offset: 3px;
 }
 
 .item-card.is-disabled {
   opacity: 0.75;
   cursor: not-allowed;
+}
+
+.item-card.is-disabled.is-complete {
+  opacity: 1;
+  cursor: default;
 }
 
 .buy-form {
@@ -644,7 +633,57 @@ select.text-input {
 }
 
 .buy-button.rarity-accent {
-  border-bottom: 2px solid var(--rarity-border);
+  background: var(--rarity-button-bg);
+  color: var(--rarity-button-text);
+  border: 1px solid var(--rarity-button-border);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+}
+
+.group-buy-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-buy-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #edf2f7;
+  overflow: hidden;
+  border: 1px solid #d1dbe6;
+}
+
+.group-buy-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--rarity-base, #94a3b8),
+    var(--rarity-border, #64748b)
+  );
+}
+
+.group-buy-text {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.group-buy-complete {
+  margin-top: auto;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  border: 1px solid var(--rarity-border, #d3e1f2);
+  color: var(--rarity-border, var(--accent-dark));
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.group-buy-field {
+  display: none;
 }
 
 .rarity-badge {
@@ -670,38 +709,93 @@ select.text-input {
 }
 
 .item-card.rarity-uncommon {
-  border-color: #2f9e44;
-  box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(47, 158, 68, 0.2);
+  border-color: var(--rarity-border);
+  box-shadow: 0 8px 14px var(--rarity-shadow);
 }
 
 .item-card.rarity-rare {
-  border-color: #2b6dd8;
-  box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(45, 108, 223, 0.25);
+  border-color: var(--rarity-border);
+  box-shadow: 0 10px 18px var(--rarity-shadow);
 }
 
 .item-card.rarity-legendary {
-  border-color: #7b2cbf;
-  box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(123, 44, 191, 0.25);
+  border-color: var(--rarity-border);
+  box-shadow: 0 12px 20px var(--rarity-shadow), 0 0 16px var(--rarity-glow);
 }
 
-.item-card.rarity-rare::after,
-.item-card.rarity-legendary::after {
-  content: '';
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  width: 46px;
-  height: 46px;
-  border-top-right-radius: 12px;
-  pointer-events: none;
+.item-card.rarity-uncommon .rarity-strip {
+  height: 4px;
+  background: var(--rarity-base);
 }
 
-.item-card.rarity-rare::after {
-  background: linear-gradient(135deg, rgba(210, 210, 210, 0.95), rgba(255, 255, 255, 0));
+.item-card.rarity-rare .rarity-strip {
+  background: var(--rarity-base);
 }
 
-.item-card.rarity-legendary::after {
-  background: linear-gradient(135deg, rgba(245, 200, 80, 0.95), rgba(255, 255, 255, 0));
+.item-card.rarity-legendary .rarity-strip {
+  background: linear-gradient(90deg, var(--rarity-strip-from), var(--rarity-strip-to));
+  background-size: 200% 100%;
+}
+
+.item-card.rarity-uncommon .rarity-label {
+  color: var(--rarity-base);
+}
+
+.item-card.rarity-rare .rarity-label,
+.item-card.rarity-legendary .rarity-label {
+  color: transparent;
+  background: linear-gradient(
+    180deg,
+    var(--rarity-metal-from, var(--rarity-silver-from)),
+    var(--rarity-metal-to, var(--rarity-silver-to))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.item-card.rarity-legendary .rarity-label {
+  background-size: 200% 100%;
+}
+
+.rarity-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rarity-accent, var(--rarity-base));
+}
+
+.rarity-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: currentColor;
+}
+
+.item-card.rarity-legendary.is-clickable:hover .rarity-label,
+.item-card.rarity-legendary.is-clickable:hover .rarity-strip {
+  animation: legendaryShimmer 1.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-card.rarity-legendary.is-clickable:hover .rarity-label,
+  .item-card.rarity-legendary.is-clickable:hover .rarity-strip {
+    animation: none;
+  }
+  .item-card.rarity-legendary.is-clickable:hover {
+    transform: none;
+  }
+}
+
+@keyframes legendaryShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
 }
 
 .rarity-badge.rarity-uncommon {

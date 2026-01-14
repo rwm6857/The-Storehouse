@@ -22,12 +22,13 @@
             <th class="col-cost">Cost (<%= currencySymbols.shekels %>)</th>
             <th class="col-stock">Stock</th>
             <th>Status</th>
-            <th>Order</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <% items.forEach((item) => { %>
+          <% items.forEach((item, index) => { %>
+            <% const isFirst = index === 0; %>
+            <% const isLast = index === items.length - 1; %>
             <tr>
               <td><%= item.name %></td>
               <td><%= item.category %></td>
@@ -41,8 +42,23 @@
               <td class="col-cost"><%= item.price_shekels %><%= currencySymbols.shekels %></td>
               <td class="col-stock"><%= item.inventory %></td>
               <td><%= item.active ? 'Active' : 'Inactive' %></td>
-              <td><%= item.sort_order %></td>
               <td>
+                <form method="post" action="/admin/items/<%= item.id %>/move" class="inline-form">
+                  <input type="hidden" name="direction" value="up" />
+                  <button class="button small icon-button" type="submit" aria-label="Move item up" title="Move item up" <%= isFirst ? 'disabled' : '' %>>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 5l7 7H5l7-7z"></path>
+                    </svg>
+                  </button>
+                </form>
+                <form method="post" action="/admin/items/<%= item.id %>/move" class="inline-form">
+                  <input type="hidden" name="direction" value="down" />
+                  <button class="button small icon-button" type="submit" aria-label="Move item down" title="Move item down" <%= isLast ? 'disabled' : '' %>>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 19l-7-7h14l-7 7z"></path>
+                    </svg>
+                  </button>
+                </form>
                 <a class="button small icon-button" href="/admin/items/<%= item.id %>/edit" aria-label="Edit item" title="Edit item">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25z"></path>
@@ -81,11 +97,26 @@
       <label class="form-label">Name
         <input type="text" name="name" class="text-input" required />
       </label>
-      <label class="form-label">Cost (<%= currencySymbols.shekels %>)
-        <input type="number" name="price_shekels" class="text-input" min="0" required />
+      <label class="form-label">Type
+        <select name="type" class="text-input" id="itemTypeSelect">
+          <option value="standard" selected>Standard</option>
+          <option value="group_buy">Group Goal</option>
+        </select>
       </label>
-      <label class="form-label">Stock
-        <input type="number" name="inventory" class="text-input" min="0" value="0" required />
+      <label class="form-label standard-field">Cost (<%= currencySymbols.shekels %>)
+        <input type="number" name="price_shekels" class="text-input" min="0" />
+      </label>
+      <label class="form-label standard-field">Stock
+        <input type="number" name="inventory" class="text-input" min="0" value="0" />
+      </label>
+      <label class="form-label group-buy-field">Goal Amount (<%= currencySymbols.shekels %>)
+        <input type="number" name="goal_amount" class="text-input" min="1" />
+      </label>
+      <label class="form-label group-buy-field">Cost (per contribution) (<%= currencySymbols.shekels %>)
+        <input type="number" name="buy_in_cost" class="text-input" min="1" />
+      </label>
+      <label class="form-label group-buy-field">Progress Amount (<%= currencySymbols.shekels %>)
+        <input type="number" name="progress_amount" class="text-input" min="0" value="0" />
       </label>
       <label class="form-label">Category
         <input type="text" name="category" class="text-input" value="snack" />
@@ -97,9 +128,6 @@
           <option value="rare">Rare</option>
           <option value="legendary">Legendary</option>
         </select>
-      </label>
-      <label class="form-label">Sort Order
-        <input type="number" name="sort_order" class="text-input" value="0" />
       </label>
       <label class="checkbox">
         <input type="checkbox" name="active" checked /> Active
@@ -117,6 +145,9 @@
   const addItemModal = document.getElementById('addItemModal');
   const closeAddItem = document.getElementById('closeAddItem');
   const cancelAddItem = document.getElementById('cancelAddItem');
+  const itemTypeSelect = document.getElementById('itemTypeSelect');
+  const groupBuyFields = addItemModal.querySelectorAll('.group-buy-field');
+  const standardFields = addItemModal.querySelectorAll('.standard-field');
   const shouldOpen = <%= error ? 'true' : 'false' %>;
 
   function openModal() {
@@ -135,9 +166,30 @@
     document.body.classList.remove('modal-open');
   }
 
+  function toggleItemTypeFields() {
+    const isGroupBuy = itemTypeSelect && itemTypeSelect.value === 'group_buy';
+    groupBuyFields.forEach((field) => {
+      field.style.display = isGroupBuy ? 'block' : 'none';
+      const input = field.querySelector('input');
+      if (input) {
+        input.required = isGroupBuy && (input.name === 'goal_amount' || input.name === 'buy_in_cost');
+      }
+    });
+    standardFields.forEach((field) => {
+      const input = field.querySelector('input');
+      if (input) {
+        input.required = !isGroupBuy;
+      }
+      field.style.display = isGroupBuy ? 'none' : 'block';
+    });
+  }
+
   openAddItem.addEventListener('click', openModal);
   closeAddItem.addEventListener('click', closeModal);
   cancelAddItem.addEventListener('click', closeModal);
+  if (itemTypeSelect) {
+    itemTypeSelect.addEventListener('change', toggleItemTypeFields);
+  }
   addItemModal.addEventListener('click', (event) => {
     if (event.target === addItemModal) {
       closeModal();
@@ -152,5 +204,7 @@
   if (shouldOpen) {
     openModal();
   }
+
+  toggleItemTypeFields();
 </script>
 <%- include('../../partials/footer') %>

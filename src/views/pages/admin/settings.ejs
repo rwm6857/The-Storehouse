@@ -7,6 +7,12 @@
   <% if (saved) { %>
     <div class="notice success">Settings saved.</div>
   <% } %>
+  <% if (imported) { %>
+    <div class="notice success">Data import complete.</div>
+  <% } %>
+  <% if (importError) { %>
+    <div class="notice error"><%= importError %></div>
+  <% } %>
   <form method="post" action="/admin/settings" class="form-grid">
     <label class="form-label">Attendance Shekels
       <input type="number" name="attendance_shekels" class="text-input" min="0" value="<%= economy.attendance_shekels %>" required />
@@ -37,4 +43,47 @@
     <button class="button" type="submit">Save Settings</button>
   </form>
 </section>
+
+<section class="panel">
+  <h2>Data Transfer</h2>
+  <p class="muted">Export or import students, items, balances, and settings between systems.</p>
+  <div class="form-stack">
+    <a class="button" href="/admin/transfer/export">Download JSON Export</a>
+    <form method="post" action="/admin/transfer/import" class="form-stack" id="importForm">
+      <label class="form-label">Import JSON
+        <textarea name="payload" rows="10" placeholder="Paste export JSON here"></textarea>
+      </label>
+      <label class="form-label">Or choose a JSON file
+        <input type="file" id="importFile" accept="application/json" class="text-input" />
+      </label>
+      <button class="button" type="submit">Import (Replaces Current Data)</button>
+    </form>
+  </div>
+</section>
+
+<script>
+  const importFile = document.getElementById('importFile');
+  const importForm = document.getElementById('importForm');
+  const payloadField = importForm ? importForm.querySelector('textarea[name="payload"]') : null;
+
+  if (importFile && payloadField) {
+    importFile.addEventListener('change', (event) => {
+      const [file] = event.target.files || [];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        payloadField.value = String(reader.result || '').trim();
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  if (importForm) {
+    importForm.addEventListener('submit', (event) => {
+      if (!confirm('Importing will replace all current students, items, and balances. Continue?')) {
+        event.preventDefault();
+      }
+    });
+  }
+</script>
 <%- include('../../partials/footer') %>

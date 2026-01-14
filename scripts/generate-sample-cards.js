@@ -3,11 +3,16 @@ const path = require('path');
 const { generateStudentCardsPdf } = require('../src/lib/studentCardsPdf');
 
 async function run() {
-  const samples = Array.from({ length: 12 }, (_, index) => ({
-    id: index + 1,
-    name: `Student ${String(index + 1).padStart(2, '0')}`,
-    qr_id: `sample-${String(index + 1).padStart(3, '0')}`
-  }));
+  const samples = [
+    { id: 1, name: 'Ava Johnson', qr_id: 'sample-001' },
+    { id: 2, name: 'Christopher Alessandro Montgomery', qr_id: 'sample-002' },
+    { id: 3, name: 'Liam Chen', qr_id: 'sample-003' },
+    { id: 4, name: 'Olivia Martinez', qr_id: 'sample-004' },
+    { id: 5, name: 'Amelia Rutherford-Smythe', qr_id: 'sample-005' },
+    { id: 6, name: 'Noah Patel', qr_id: 'sample-006' },
+    { id: 7, name: 'Sophia Nguyen', qr_id: 'sample-007' },
+    { id: 8, name: 'Jackson Davis', qr_id: 'sample-008' }
+  ];
 
   const pdfBytes = await generateStudentCardsPdf({
     students: samples,

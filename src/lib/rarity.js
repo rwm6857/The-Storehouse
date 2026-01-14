@@ -1,21 +1,55 @@
+// Centralized visual tokens for shop rarity styling.
 const rarityTokens = {
   uncommon: {
-    spineFrom: '#34D399',
-    spineTo: '#059669',
-    border: '#10B981',
-    glow: 'rgba(16,185,129,0.14)'
+    base: '#22c55e',
+    accent: '#22c55e',
+    border: '#16a34a',
+    stripFrom: '#22c55e',
+    stripTo: '#22c55e',
+    labelFrom: '#16a34a',
+    labelTo: '#22c55e',
+    icon: 'leaf',
+    buttonBg: '#ecfdf3',
+    buttonText: '#14532d',
+    buttonBorder: '#22c55e',
+    shadow: 'rgba(34,197,94,0.12)',
+    hoverShadow: 'rgba(34,197,94,0.18)',
+    glow: 'rgba(0,0,0,0)',
+    focus: 'rgba(34,197,94,0.35)'
   },
   rare: {
-    spineFrom: '#60A5FA',
-    spineTo: '#2563EB',
-    border: '#3B82F6',
-    glow: 'rgba(59,130,246,0.16)'
+    base: '#3b82f6',
+    accent: '#d1d5db',
+    border: '#2563eb',
+    stripFrom: '#3b82f6',
+    stripTo: '#1d4ed8',
+    labelFrom: '#cbd5e1',
+    labelTo: '#6b7280',
+    icon: 'diamond',
+    buttonBg: '#eff6ff',
+    buttonText: '#1e3a8a',
+    buttonBorder: '#60a5fa',
+    shadow: 'rgba(59,130,246,0.14)',
+    hoverShadow: 'rgba(59,130,246,0.22)',
+    glow: 'rgba(0,0,0,0)',
+    focus: 'rgba(59,130,246,0.35)'
   },
   legendary: {
-    spineFrom: '#FBBF24',
-    spineTo: '#B45309',
-    border: '#F59E0B',
-    glow: 'rgba(245,158,11,0.20)'
+    base: '#8b5cf6',
+    accent: '#f5c451',
+    border: '#d4a445',
+    stripFrom: '#f6c453',
+    stripTo: '#7c3aed',
+    labelFrom: '#edc26f',
+    labelTo: '#8a5a18',
+    icon: 'crown',
+    buttonBg: '#fef7e6',
+    buttonText: '#6b3f00',
+    buttonBorder: '#f3c15d',
+    shadow: 'rgba(124,58,237,0.18)',
+    hoverShadow: 'rgba(124,58,237,0.28)',
+    glow: 'rgba(245,197,105,0.22)',
+    focus: 'rgba(245,197,105,0.38)'
   }
 };
 
@@ -34,26 +68,8 @@ function getRarityTokens(rarity) {
   return rarityTokens[normalized] || null;
 }
 
-function hexToRgba(hex, alpha) {
-  const clean = hex.replace('#', '').trim();
-  const normalized = clean.length === 3
-    ? clean
-        .split('')
-        .map((ch) => ch + ch)
-        .join('')
-    : clean;
-  if (normalized.length !== 6) {
-    return `rgba(0,0,0,${alpha})`;
-  }
-  const r = Number.parseInt(normalized.slice(0, 2), 16);
-  const g = Number.parseInt(normalized.slice(2, 4), 16);
-  const b = Number.parseInt(normalized.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
 module.exports = {
   rarityTokens,
   normalizeRarity,
-  getRarityTokens,
-  hexToRgba
+  getRarityTokens
 };

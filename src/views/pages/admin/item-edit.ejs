@@ -5,15 +5,31 @@
     <div class="notice error"><%= error %></div>
   <% } %>
   <% const rarityValue = item.rarity || 'common'; %>
+  <% const typeValue = (item.type || 'standard'); %>
   <form method="post" action="/admin/items/<%= item.id %>/edit" class="form-stack">
     <label class="form-label">Name
       <input type="text" name="name" class="text-input" value="<%= item.name %>" required />
     </label>
-    <label class="form-label">Cost (<%= currencySymbols.shekels %>)
-      <input type="number" name="price_shekels" class="text-input" min="0" value="<%= item.price_shekels %>" required />
+    <label class="form-label">Type
+      <select name="type" class="text-input" id="editItemTypeSelect">
+        <option value="standard" <%= typeValue === 'standard' ? 'selected' : '' %>>Standard</option>
+        <option value="group_buy" <%= typeValue === 'group_buy' ? 'selected' : '' %>>Group Goal</option>
+      </select>
     </label>
-    <label class="form-label">Stock
-      <input type="number" name="inventory" class="text-input" min="0" value="<%= item.inventory %>" required />
+    <label class="form-label standard-field">Cost (<%= currencySymbols.shekels %>)
+      <input type="number" name="price_shekels" class="text-input" min="0" value="<%= item.price_shekels %>" />
+    </label>
+    <label class="form-label standard-field">Stock
+      <input type="number" name="inventory" class="text-input" min="0" value="<%= item.inventory %>" />
+    </label>
+    <label class="form-label group-buy-field">Goal Amount (<%= currencySymbols.shekels %>)
+      <input type="number" name="goal_amount" class="text-input" min="1" value="<%= item.goal_amount || '' %>" />
+    </label>
+    <label class="form-label group-buy-field">Cost (per contribution) (<%= currencySymbols.shekels %>)
+      <input type="number" name="buy_in_cost" class="text-input" min="1" value="<%= item.buy_in_cost || '' %>" />
+    </label>
+    <label class="form-label group-buy-field">Progress Amount (<%= currencySymbols.shekels %>)
+      <input type="number" name="progress_amount" class="text-input" min="0" value="<%= item.progress_amount || 0 %>" />
     </label>
     <label class="form-label">Category
       <input type="text" name="category" class="text-input" value="<%= item.category %>" />
@@ -26,9 +42,6 @@
         <option value="legendary" <%= rarityValue === 'legendary' ? 'selected' : '' %>>Legendary</option>
       </select>
     </label>
-    <label class="form-label">Sort Order
-      <input type="number" name="sort_order" class="text-input" value="<%= item.sort_order %>" />
-    </label>
     <label class="checkbox">
       <input type="checkbox" name="active" <%= item.active ? 'checked' : '' %> /> Active
     </label>
@@ -38,4 +51,35 @@
     </div>
   </form>
 </section>
+
+<script>
+  const editItemTypeSelect = document.getElementById('editItemTypeSelect');
+  const editForm = editItemTypeSelect ? editItemTypeSelect.closest('form') : null;
+  const groupBuyFields = editForm ? editForm.querySelectorAll('.group-buy-field') : [];
+  const standardFields = editForm ? editForm.querySelectorAll('.standard-field') : [];
+
+  function toggleEditItemTypeFields() {
+    const isGroupBuy = editItemTypeSelect && editItemTypeSelect.value === 'group_buy';
+    groupBuyFields.forEach((field) => {
+      field.style.display = isGroupBuy ? 'block' : 'none';
+      const input = field.querySelector('input');
+      if (input) {
+        input.required = isGroupBuy && (input.name === 'goal_amount' || input.name === 'buy_in_cost');
+      }
+    });
+    standardFields.forEach((field) => {
+      const input = field.querySelector('input');
+      if (input) {
+        input.required = !isGroupBuy;
+      }
+      field.style.display = isGroupBuy ? 'none' : 'block';
+    });
+  }
+
+  if (editItemTypeSelect) {
+    editItemTypeSelect.addEventListener('change', toggleEditItemTypeFields);
+  }
+
+  toggleEditItemTypeFields();
+</script>
 <%- include('../../partials/footer') %>

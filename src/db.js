@@ -45,6 +45,11 @@ db.exec(`
     sort_order INTEGER NOT NULL DEFAULT 0,
     category TEXT NOT NULL DEFAULT 'snack',
     rarity TEXT NOT NULL DEFAULT 'common',
+    type TEXT NOT NULL DEFAULT 'standard',
+    goal_amount INTEGER,
+    buy_in_cost INTEGER,
+    progress_amount INTEGER NOT NULL DEFAULT 0,
+    completed_at TEXT,
     created_at TEXT NOT NULL
   );
 
@@ -76,6 +81,33 @@ if (!hasRarity) {
   db.exec("ALTER TABLE items ADD COLUMN rarity TEXT NOT NULL DEFAULT 'common'");
 }
 db.exec("UPDATE items SET rarity = 'common' WHERE rarity IS NULL OR rarity = ''");
+
+const hasType = itemColumns.some((col) => col.name === 'type');
+if (!hasType) {
+  db.exec("ALTER TABLE items ADD COLUMN type TEXT NOT NULL DEFAULT 'standard'");
+}
+db.exec("UPDATE items SET type = 'standard' WHERE type IS NULL OR type = ''");
+
+const hasGoalAmount = itemColumns.some((col) => col.name === 'goal_amount');
+if (!hasGoalAmount) {
+  db.exec('ALTER TABLE items ADD COLUMN goal_amount INTEGER');
+}
+
+const hasBuyInCost = itemColumns.some((col) => col.name === 'buy_in_cost');
+if (!hasBuyInCost) {
+  db.exec('ALTER TABLE items ADD COLUMN buy_in_cost INTEGER');
+}
+
+const hasProgressAmount = itemColumns.some((col) => col.name === 'progress_amount');
+if (!hasProgressAmount) {
+  db.exec('ALTER TABLE items ADD COLUMN progress_amount INTEGER NOT NULL DEFAULT 0');
+}
+db.exec('UPDATE items SET progress_amount = 0 WHERE progress_amount IS NULL');
+
+const hasCompletedAt = itemColumns.some((col) => col.name === 'completed_at');
+if (!hasCompletedAt) {
+  db.exec('ALTER TABLE items ADD COLUMN completed_at TEXT');
+}
 
 const defaultEconomy = {
   attendance_shekels: 2,
