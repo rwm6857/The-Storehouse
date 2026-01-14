@@ -10,6 +10,7 @@ const {
   ensureTalentsRow
 } = require('../db');
 const { normalizeRarity } = require('../lib/rarity');
+const { generateStudentCardsPdf } = require('../lib/studentCardsPdf');
 
 function nowIso() {
   return new Date().toISOString();
@@ -81,6 +82,49 @@ function adminRoutes({ verifyPasscode }) {
     `).all();
 
     res.render('pages/admin/students', { students, filter });
+  });
+
+  router.post('/students/cards.pdf', requireAdmin, async (req, res) => {
+    const rawIds = req.body.studentIds;
+    const ids = Array.isArray(rawIds) ? rawIds : rawIds ? [rawIds] : [];
+    const studentIds = ids
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => Number.isFinite(value));
+
+    if (studentIds.length === 0) {
+      return res.status(400).send('No students selected.');
+    }
+
+    const placeholders = studentIds.map(() => '?').join(',');
+    const students = db
+      .prepare(
+        `SELECT id, name, qr_id FROM students WHERE id IN (${placeholders}) ORDER BY name COLLATE NOCASE`
+      )
+      .all(...studentIds);
+
+    if (!students.length) {
+      return res.status(404).send('No matching students found.');
+    }
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    try {
+      const pdfBytes = await generateStudentCardsPdf({ students, baseUrl });
+      const now = new Date();
+      const stamp = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+      ].join('-');
+      const filename = `storehouse-student-cards-${stamp}.pdf`;
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      return res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to generate student cards PDF', error);
+      return res.status(500).send('Failed to generate PDF.');
+    }
   });
 
   router.get('/students/new', requireAdmin, (req, res) => {

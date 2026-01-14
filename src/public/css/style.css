@@ -199,6 +199,13 @@ body {
   flex-wrap: wrap;
 }
 
+.panel-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .button,
 .link-button {
   background: linear-gradient(180deg, #fefefe 0%, #d6e8ff 100%);

@@ -2,7 +2,12 @@
 <section class="panel">
   <div class="panel-header">
     <h2>Students</h2>
-    <a class="button" href="/admin/students/new">Add Student</a>
+    <div class="panel-actions">
+      <button class="button" id="generateCardsBtn" type="submit" form="studentTableForm" disabled>
+        Generate Cards (PDF)
+      </button>
+      <a class="button" href="/admin/students/new">Add Student</a>
+    </div>
   </div>
   <div class="filters">
     <a class="chip <%= filter === 'active' ? 'active' : '' %>" href="/admin/students?filter=active">Active</a>
@@ -11,42 +16,82 @@
     <input type="text" id="adminStudentSearch" placeholder="Search" class="text-input" />
   </div>
   <div class="table-wrap">
-    <table class="data-table" id="adminStudentTable">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Status</th>
-          <th><%= labels.shekels_label %></th>
-          <th><%= labels.talents_label %></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% students.forEach((student) => { %>
+    <form id="studentTableForm" method="post" action="/admin/students/cards.pdf">
+      <table class="data-table" id="adminStudentTable">
+        <thead>
           <tr>
-            <td><%= student.name %></td>
-            <td><%= student.active ? 'Active' : 'Inactive' %></td>
-            <td><%= student.balance %><%= currencySymbols.shekels %></td>
-            <td><%= currencySymbols.talents %><%= student.talents %></td>
-            <td>
-              <a class="button small" href="/admin/students/<%= student.id %>">View</a>
-              <a class="button small" href="/s/<%= student.qr_id %>">Open</a>
-            </td>
+            <th>
+              <input type="checkbox" id="selectAllStudents" aria-label="Select all students" />
+            </th>
+            <th>Name</th>
+            <th>Status</th>
+            <th><%= labels.shekels_label %></th>
+            <th><%= labels.talents_label %></th>
+            <th></th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% students.forEach((student) => { %>
+            <tr>
+              <td>
+                <input type="checkbox" class="student-select" name="studentIds" value="<%= student.id %>" />
+              </td>
+              <td><%= student.name %></td>
+              <td><%= student.active ? 'Active' : 'Inactive' %></td>
+              <td><%= student.balance %><%= currencySymbols.shekels %></td>
+              <td><%= currencySymbols.talents %><%= student.talents %></td>
+              <td>
+                <a class="button small" href="/admin/students/<%= student.id %>">View</a>
+                <a class="button small" href="/s/<%= student.qr_id %>">Open</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </form>
   </div>
 </section>
 
 <script>
   const adminSearchInput = document.getElementById('adminStudentSearch');
   const adminStudentTable = document.getElementById('adminStudentTable');
+  const studentTableForm = document.getElementById('studentTableForm');
+  const selectAllStudents = document.getElementById('selectAllStudents');
+  const cardButton = document.getElementById('generateCardsBtn');
+  const studentCheckboxes = Array.from(document.querySelectorAll('.student-select'));
+
+  function updateCardButton() {
+    const anyChecked = studentCheckboxes.some((checkbox) => checkbox.checked);
+    cardButton.disabled = !anyChecked;
+  }
+
+  studentCheckboxes.forEach((checkbox) => {
+    checkbox.addEventListener('change', updateCardButton);
+  });
+
+  if (selectAllStudents) {
+    selectAllStudents.addEventListener('change', (event) => {
+      const checked = event.target.checked;
+      studentCheckboxes.forEach((checkbox) => {
+        checkbox.checked = checked;
+      });
+      updateCardButton();
+    });
+  }
+
+  if (studentTableForm) {
+    studentTableForm.addEventListener('submit', (event) => {
+      if (cardButton.disabled) {
+        event.preventDefault();
+      }
+    });
+  }
+
   adminSearchInput.addEventListener('input', (event) => {
     const term = event.target.value.toLowerCase();
     const rows = adminStudentTable.querySelectorAll('tbody tr');
     rows.forEach((row) => {
-      const name = row.children[0].textContent.toLowerCase();
+      const name = row.children[1].textContent.toLowerCase();
       row.style.display = name.includes(term) ? '' : 'none';
     });
   });
