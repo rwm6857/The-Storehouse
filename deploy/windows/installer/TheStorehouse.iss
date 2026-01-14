@@ -34,7 +34,7 @@ Name: "{commonappdata}\\The Storehouse\\logs"; Flags: uninsneveruninstall
 Name: "firewall"; Description: "Add Windows Firewall rule for port 3040 (recommended)"; Flags: checkedonce
 
 [Icons]
-Name: "{group}\\Open The Storehouse"; Filename: "http://localhost:3040"; Flags: shellexec
+Name: "{group}\\Open The Storehouse"; Filename: "http://localhost:3040"
 
 [Run]
 Filename: "http://localhost:3040"; Description: "Open The Storehouse"; Flags: postinstall nowait shellexec
