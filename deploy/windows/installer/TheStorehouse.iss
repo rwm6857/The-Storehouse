@@ -1,10 +1,10 @@
 #define AppName "The Storehouse"
 #define AppPublisher "The Storehouse"
-#define AppId "{0D808AA6-A082-4465-9FDE-DB3BF68623D8}"
+#define AppId "0D808AA6-A082-4465-9FDE-DB3BF68623D8"
 #define AppVersion "0.0.0"
 
 [Setup]
-AppId={#AppId}
+AppId={{#AppId}}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
@@ -51,7 +51,7 @@ var
 
 function GetUninstallKey(): string;
 begin
-  Result := 'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{#AppId}_is1';
+  Result := 'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{{#AppId}}_is1';
 end;
 
 function IsAppInstalled(): Boolean;
