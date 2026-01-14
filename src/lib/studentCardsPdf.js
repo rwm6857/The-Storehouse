@@ -11,9 +11,10 @@ const LAYOUT = {
   gapMm: 6,
   borderInsetMm: 1,
   borderWidthMm: 0.3,
-  qr: { sizeMm: 40, topOffsetMm: 6, gapBelowMm: 4 },
+  qr: { sizeMm: 40, leftInsetMm: 6 },
+  text: { leftInsetMm: 6, rightInsetMm: 6, gapBelowQrMm: 4, footerGapMm: 2 },
   name: { maxPt: 16, minPt: 12 },
-  footer: { sizePt: 8, offsetMm: 3 }
+  footer: { sizePt: 8 }
 };
 
 function mmToPt(mm) {
@@ -137,8 +138,16 @@ async function generateStudentCardsPdf({ students, baseUrl }) {
     const qrImage = await pdfDoc.embedPng(qrPng);
 
     const qrSize = mmToPt(LAYOUT.qr.sizeMm);
-    const qrX = cardX + (cardWidth - qrSize) / 2;
-    const qrY = cardY + cardHeight - mmToPt(LAYOUT.qr.topOffsetMm) - qrSize;
+    const qrX = cardX + mmToPt(LAYOUT.qr.leftInsetMm);
+
+    const gapBelowQr = mmToPt(LAYOUT.text.gapBelowQrMm);
+    const footerGap = mmToPt(LAYOUT.text.footerGapMm);
+
+    const textMaxWidth = cardWidth - mmToPt(LAYOUT.text.leftInsetMm + LAYOUT.text.rightInsetMm);
+    const fittedName = fitText(fontBold, student.name, textMaxWidth, LAYOUT.name.maxPt, LAYOUT.name.minPt);
+    const blockHeight = qrSize + gapBelowQr + fittedName.size + footerGap + LAYOUT.footer.sizePt;
+    const blockTop = cardY + (cardHeight + blockHeight) / 2;
+    const qrY = blockTop - qrSize;
     page.drawImage(qrImage, {
       x: qrX,
       y: qrY,
@@ -146,14 +155,11 @@ async function generateStudentCardsPdf({ students, baseUrl }) {
       height: qrSize
     });
 
-    const nameMaxWidth = cardWidth - mmToPt(8);
-    const fittedName = fitText(fontBold, student.name, nameMaxWidth, LAYOUT.name.maxPt, LAYOUT.name.minPt);
-    const nameWidth = fontBold.widthOfTextAtSize(fittedName.text, fittedName.size);
-    const nameX = cardX + (cardWidth - nameWidth) / 2;
-    const nameY = qrY - mmToPt(LAYOUT.qr.gapBelowMm) - fittedName.size;
+    const textLeft = cardX + mmToPt(LAYOUT.text.leftInsetMm);
+    const nameY = qrY - gapBelowQr - fittedName.size;
 
     page.drawText(fittedName.text, {
-      x: nameX,
+      x: textLeft,
       y: nameY,
       size: fittedName.size,
       font: fontBold,
@@ -162,11 +168,9 @@ async function generateStudentCardsPdf({ students, baseUrl }) {
 
     const footerText = 'The Storehouse';
     const footerSize = LAYOUT.footer.sizePt;
-    const footerWidth = fontRegular.widthOfTextAtSize(footerText, footerSize);
-    const footerX = cardX + (cardWidth - footerWidth) / 2;
-    const footerY = cardY + mmToPt(LAYOUT.footer.offsetMm);
+    const footerY = nameY - footerGap - footerSize;
     page.drawText(footerText, {
-      x: footerX,
+      x: textLeft,
       y: footerY,
       size: footerSize,
       font: fontRegular,
