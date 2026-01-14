@@ -14,6 +14,7 @@ DisableDirPage=no
 UsePreviousAppDir=yes
 PrivilegesRequired=admin
 OutputDir=..\dist
+SourceDir=..\..
 OutputBaseFilename=TheStorehouse-Setup
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
@@ -22,7 +23,7 @@ SolidCompression=yes
 WizardStyle=modern
 
 [Files]
-Source: "..\\dist\\TheStorehouse\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\\TheStorehouse\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "deploy\\windows\\installer\\config.json"; DestDir: "{commonappdata}\\The Storehouse\\config"; Flags: onlyifdoesntexist uninsneveruninstall
 
 [Dirs]
