@@ -148,6 +148,14 @@ function publicRoutes() {
         amount: economy.memory_verse_shekels,
         reason: 'Memory Verse'
       },
+      brought_bible: {
+        amount: 1,
+        reason: 'Brought Bible'
+      },
+      brought_friend: {
+        amount: 3,
+        reason: 'Brought Friend'
+      },
       bonus: {
         amount: null,
         reason: 'Bonus'

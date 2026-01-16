@@ -5,6 +5,7 @@
     <div class="notice error"><%= error %></div>
   <% } %>
   <form method="post" action="/admin/students/new" class="form-stack">
+    <input type="hidden" name="form_token" value="<%= formToken %>" />
     <label class="form-label">Name
       <input type="text" name="name" class="text-input" required />
     </label>

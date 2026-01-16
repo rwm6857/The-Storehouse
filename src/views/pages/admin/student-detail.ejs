@@ -54,6 +54,14 @@
       <button class="button big" type="submit">+ Memory Verse (<%= economy.memory_verse_shekels %>)</button>
     </form>
     <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="brought_bible" />
+      <button class="button big" type="submit">+ Brought Bible (1)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
+      <input type="hidden" name="type" value="brought_friend" />
+      <button class="button big" type="submit">+ Brought Friend (3)</button>
+    </form>
+    <form method="post" action="/s/<%= student.qr_id %>/earn">
       <input type="hidden" name="type" value="bonus" />
       <button class="button big" type="submit">🎲 Bonus</button>
     </form>
@@ -63,6 +71,20 @@
 <section class="panel admin-panel">
   <h3>Admin Controls</h3>
   <div class="admin-actions">
+    <form method="post" action="/admin/students/<%= student.id %>/adjust" class="inline-form">
+      <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+      <input type="hidden" name="amount" value="1" />
+      <input type="hidden" name="reason" value="Add one shekel" />
+      <button class="button" type="submit">Add one shekel</button>
+    </form>
+
+    <form method="post" action="/admin/students/<%= student.id %>/adjust" class="inline-form">
+      <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
+      <input type="hidden" name="amount" value="-1" />
+      <input type="hidden" name="reason" value="Remove one shekel" />
+      <button class="button" type="submit">Remove one shekel</button>
+    </form>
+
     <form method="post" action="/admin/students/<%= student.id %>/adjust" class="inline-form">
       <input type="hidden" name="qr_id" value="<%= student.qr_id %>" />
       <input type="number" name="amount" class="text-input" placeholder="Amount" required />

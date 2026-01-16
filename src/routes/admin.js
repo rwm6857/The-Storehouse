@@ -21,6 +21,10 @@ function makeQrId() {
   return crypto.randomBytes(16).toString('base64url');
 }
 
+function createFormToken() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
 function adminRoutes({ verifyPasscode }) {
   const router = express.Router();
 
@@ -129,17 +133,37 @@ function adminRoutes({ verifyPasscode }) {
   });
 
   router.get('/students/new', requireAdmin, (req, res) => {
-    res.render('pages/admin/student-new', { error: null });
+    const formToken = createFormToken();
+    req.session.newStudentToken = formToken;
+    res.render('pages/admin/student-new', { error: null, formToken });
   });
 
   router.post('/students/new', requireAdmin, (req, res) => {
+    const formToken = (req.body.form_token || '').trim();
+    const sessionToken = req.session.newStudentToken || '';
+    const lastToken = req.session.lastStudentToken || '';
+    const lastStudent = req.session.lastStudentCreated || null;
+
+    if (!formToken || !sessionToken || formToken !== sessionToken) {
+      if (formToken && lastStudent && formToken === lastToken) {
+        return res.render('pages/admin/student-created', { student: lastStudent });
+      }
+      const nextToken = createFormToken();
+      req.session.newStudentToken = nextToken;
+      return res.status(409).render('pages/admin/student-new', {
+        error: 'This form was already submitted. Please try again.',
+        formToken: nextToken
+      });
+    }
+
     const name = (req.body.name || '').trim();
     const notes = (req.body.notes || '').trim();
     const active = req.body.active === 'on' ? 1 : 0;
 
     if (!name) {
       return res.status(400).render('pages/admin/student-new', {
-        error: 'Name is required.'
+        error: 'Name is required.',
+        formToken
       });
     }
 
@@ -153,13 +177,17 @@ function adminRoutes({ verifyPasscode }) {
 
     ensureTalentsRow(result.lastInsertRowid);
 
-    return res.render('pages/admin/student-created', {
-      student: {
-        id: result.lastInsertRowid,
-        name,
-        qr_id: qrId
-      }
-    });
+    const student = {
+      id: result.lastInsertRowid,
+      name,
+      qr_id: qrId
+    };
+
+    req.session.lastStudentCreated = student;
+    req.session.lastStudentToken = formToken;
+    req.session.newStudentToken = null;
+
+    return res.render('pages/admin/student-created', { student });
   });
 
   router.get('/students/:id', requireAdmin, (req, res) => {
@@ -579,8 +607,24 @@ function adminRoutes({ verifyPasscode }) {
         label: `Memory Verse (+${economy.memory_verse_shekels} ${labels.shekels_label})`
       },
       {
+        key: 'brought_bible',
+        label: `Brought Bible (+1 ${labels.shekels_label})`
+      },
+      {
+        key: 'brought_friend',
+        label: `Brought Friend (+3 ${labels.shekels_label})`
+      },
+      {
         key: 'bonus',
         label: `Bonus (+${economy.bonus_min}-${economy.bonus_max} ${labels.shekels_label})`
+      },
+      {
+        key: 'add_one_shekel',
+        label: 'Add one shekel'
+      },
+      {
+        key: 'remove_one_shekel',
+        label: 'Remove one shekel'
       }
     ];
 
@@ -620,30 +664,54 @@ function adminRoutes({ verifyPasscode }) {
     }
 
     const economy = getEconomySettings();
-    const earnMap = {
+    const actionMap = {
       attendance: {
         amount: economy.attendance_shekels,
-        reason: 'Attendance'
+        reason: 'Attendance',
+        type: 'earn'
       },
       participation: {
         amount: economy.participation_shekels,
-        reason: 'Participation'
+        reason: 'Participation',
+        type: 'earn'
       },
       memory: {
         amount: economy.memory_verse_shekels,
-        reason: 'Memory Verse'
+        reason: 'Memory Verse',
+        type: 'earn'
+      },
+      brought_bible: {
+        amount: 1,
+        reason: 'Brought Bible',
+        type: 'earn'
+      },
+      brought_friend: {
+        amount: 3,
+        reason: 'Brought Friend',
+        type: 'earn'
       },
       bonus: {
         amount: null,
-        reason: 'Bonus'
+        reason: 'Bonus',
+        type: 'earn'
+      },
+      add_one_shekel: {
+        amount: 1,
+        reason: 'Add one shekel',
+        type: 'adjust'
+      },
+      remove_one_shekel: {
+        amount: -1,
+        reason: 'Remove one shekel',
+        type: 'adjust'
       }
     };
 
-    if (!earnMap[action]) {
+    if (!actionMap[action]) {
       return res.status(400).render('pages/error', { message: 'Invalid bulk action.' });
     }
 
-    let amount = earnMap[action].amount;
+    let amount = actionMap[action].amount;
     if (action === 'bonus') {
       const min = Number.parseInt(economy.bonus_min, 10);
       const max = Number.parseInt(economy.bonus_max, 10);
@@ -653,7 +721,7 @@ function adminRoutes({ verifyPasscode }) {
       amount = safeMin + Math.floor(Math.random() * (range + 1));
     }
 
-    insertTransactionStmt.run(studentId, 'earn', earnMap[action].reason, amount, nowIso());
+    insertTransactionStmt.run(studentId, actionMap[action].type, actionMap[action].reason, amount, nowIso());
     res.redirect(`/admin/bulk?action=${encodeURIComponent(action)}&last=${studentId}`);
   });
 
