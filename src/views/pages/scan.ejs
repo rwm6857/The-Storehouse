@@ -2,20 +2,21 @@
 <section class="panel">
   <h2>Shop Mode</h2>
   <p>Use the PC webcam to scan a student QR card for checkout.</p>
-  <div class="scan-controls">
-    <button class="button" id="startScan">Start Camera</button>
-    <button class="button" id="stopScan" disabled>Stop Camera</button>
-  </div>
   <div id="qr-reader" class="scan-reader"></div>
+  <div class="scan-controls">
+    <button class="button" id="toggleScan">Stop Camera</button>
+  </div>
   <div id="scanMessage" class="notice"></div>
 </section>
 
 <script src="https://unpkg.com/html5-qrcode" defer></script>
 <script>
-  const startBtn = document.getElementById('startScan');
-  const stopBtn = document.getElementById('stopScan');
+  const toggleBtn = document.getElementById('toggleScan');
   const message = document.getElementById('scanMessage');
   let qrScanner = null;
+  let isStarting = false;
+  let hasScanned = false;
+  let isRunning = false;
 
   function setMessage(text) {
     message.textContent = text;
@@ -41,18 +42,26 @@
     return text;
   }
 
-  startBtn.addEventListener('click', () => {
+  function startScanner() {
+    if (isStarting || isRunning) {
+      return;
+    }
     if (!window.Html5Qrcode) {
-      setMessage('Scanner library is loading. Please try again in a moment.');
+      setMessage('Loading scanner...');
+      setTimeout(startScanner, 200);
       return;
     }
 
-    qrScanner = new Html5Qrcode('qr-reader');
+    isStarting = true;
+    hasScanned = false;
+    qrScanner = qrScanner || new Html5Qrcode('qr-reader');
     qrScanner
       .start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 260, height: 260 } },
+        { fps: 10, qrbox: { width: 208, height: 208 } },
         (decodedText) => {
+          if (hasScanned) return;
+          hasScanned = true;
           const qrId = extractQrId(decodedText);
           window.location.href = `/s/${qrId}`;
         },
@@ -60,16 +69,20 @@
       )
       .then(() => {
         setMessage('Camera active. Hold a QR code steady.');
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
+        isRunning = true;
+        toggleBtn.textContent = 'Stop Camera';
+        localStorage.setItem('scanAutoStart', '1');
       })
       .catch((err) => {
         setMessage(`Camera error: ${err}`);
+      })
+      .finally(() => {
+        isStarting = false;
       });
-  });
+  }
 
-  stopBtn.addEventListener('click', () => {
-    if (!qrScanner) {
+  function stopScanner() {
+    if (!qrScanner || !isRunning) {
       return;
     }
     qrScanner
@@ -77,12 +90,23 @@
       .then(() => {
         qrScanner.clear();
         setMessage('Camera stopped.');
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
+        isRunning = false;
+        toggleBtn.textContent = 'Start Camera';
+        localStorage.removeItem('scanAutoStart');
       })
       .catch((err) => {
         setMessage(`Stop error: ${err}`);
       });
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    if (isRunning) {
+      stopScanner();
+    } else {
+      startScanner();
+    }
   });
+
+  startScanner();
 </script>
 <%- include('../partials/footer') %>

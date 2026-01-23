@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Storehouse Shop</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="page-menu-print">
+  <main class="menu-print">
+    <div class="menu-print-header">
+      <h1 class="menu-print-title">The Storehouse Shop</h1>
+      <div class="menu-actions">
+        <button class="button" type="button" onclick="window.print()">Print</button>
+        <a class="button" href="/admin/items">Back to Items</a>
+      </div>
+    </div>
+
+    <% if (items.length === 0) { %>
+      <p class="muted">No active items yet.</p>
+    <% } else { %>
+      <div class="menu-grid">
+        <% items.forEach((item) => { %>
+          <% const rarity = item.rarity || 'common'; %>
+          <% const isCommon = rarity === 'common'; %>
+          <div
+            class="item-card menu-card rarity-<%= rarity %><%= isCommon ? '' : ' has-rarity' %>"
+            <% if (item.rarityTokens) { %>
+              style="--rarity-base: <%= item.rarityTokens.base %>; --rarity-accent: <%= item.rarityTokens.accent %>; --rarity-border: <%= item.rarityTokens.border %>; --rarity-strip-from: <%= item.rarityTokens.stripFrom %>; --rarity-strip-to: <%= item.rarityTokens.stripTo %>; --rarity-metal-from: <%= item.rarityTokens.labelFrom %>; --rarity-metal-to: <%= item.rarityTokens.labelTo %>; --rarity-shadow: <%= item.rarityTokens.shadow %>;"
+            <% } %>
+          >
+            <% if (!isCommon) { %>
+              <span class="rarity-strip" aria-hidden="true"></span>
+            <% } %>
+            <div class="item-card-content">
+              <div class="item-text">
+                <div class="item-header">
+                  <h4><%= item.name %></h4>
+                  <% if (!isCommon) { %>
+                    <span class="rarity-icon rarity-icon-<%= rarity %>" aria-hidden="true">
+                      <% if (rarity === 'uncommon') { %>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 3c4 0 7 3 7 7 0 6-7 11-7 11S5 16 5 10c0-4 3-7 7-7z"></path>
+                          <path d="M12 7c-1.8 1.7-2.5 4.1-2.4 6.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+                        </svg>
+                      <% } else if (rarity === 'rare') { %>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="rarity-metal-gradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stop-color="var(--rarity-metal-from)"></stop>
+                              <stop offset="100%" stop-color="var(--rarity-metal-to)"></stop>
+                            </linearGradient>
+                          </defs>
+                          <path d="M12 3l7 7-7 11L5 10l7-7z" fill="url(#rarity-metal-gradient)"></path>
+                        </svg>
+                      <% } else { %>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="rarity-metal-gradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stop-color="var(--rarity-metal-from)"></stop>
+                              <stop offset="100%" stop-color="var(--rarity-metal-to)"></stop>
+                            </linearGradient>
+                          </defs>
+                          <path d="M4 8l4 3 4-6 4 6 4-3v9H4V8z" fill="url(#rarity-metal-gradient)"></path>
+                          <path d="M4 17h16v2H4z" fill="url(#rarity-metal-gradient)"></path>
+                        </svg>
+                      <% } %>
+                    </span>
+                  <% } %>
+                </div>
+                <span class="rarity-label rarity-<%= rarity %>"><%= rarity.replace(/^\w/, (c) => c.toUpperCase()) %></span>
+                <div class="item-meta-row menu-meta-row">
+                  <span class="muted"><%= item.category %></span>
+                  <% if (item.type === 'group_buy') { %>
+                    <span class="menu-tag">Group Goal</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="menu-price">
+                <span class="menu-price-label">Price</span>
+                <span class="menu-price-value"><%= item.price_shekels %><%= currencySymbols.shekels %></span>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+
+  <% if (autoprint) { %>
+    <script>
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          window.print();
+        }, 50);
+      });
+    </script>
+  <% } %>
+</body>
+</html>

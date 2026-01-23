@@ -1,9 +1,14 @@
 <%- include('../partials/header') %>
 <section class="panel student-panel">
+  <div class="student-toolbar compact">
+    <a class="button small" href="/scan">Back to Scanner</a>
+    <div class="student-timer muted">
+      Return in <strong id="scannerCountdown">60</strong>s
+    </div>
+  </div>
   <div class="student-header">
     <div>
       <h2><%= student.name %></h2>
-      <p class="muted">QR ID: <%= student.qr_id %></p>
     </div>
     <div class="balance-card">
       <div class="balance-line">
@@ -144,6 +149,20 @@
 
 <div class="toast" id="shopToast" role="status" aria-live="polite"></div>
 <script>
+  const countdownEl = document.getElementById('scannerCountdown');
+  if (countdownEl) {
+    let secondsLeft = 60;
+    const tick = () => {
+      secondsLeft -= 1;
+      if (secondsLeft <= 0) {
+        window.location.href = '/scan';
+        return;
+      }
+      countdownEl.textContent = secondsLeft.toString();
+    };
+    setInterval(tick, 1000);
+  }
+
   const shopCards = document.querySelectorAll('.shop-card');
   const triggerPurchase = (form) => {
     if (!form) return;

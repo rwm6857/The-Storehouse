@@ -9,7 +9,7 @@ const {
   setCurrencyLabels,
   ensureTalentsRow
 } = require('../db');
-const { normalizeRarity } = require('../lib/rarity');
+const { normalizeRarity, getRarityTokens } = require('../lib/rarity');
 const { exportStorehouseData, importStorehouseData } = require('../lib/dataTransfer');
 const { generateStudentCardsPdf } = require('../lib/studentCardsPdf');
 
@@ -366,6 +366,26 @@ function adminRoutes({ verifyPasscode }) {
       ORDER BY sort_order ASC, name COLLATE NOCASE ASC
     `).all();
     res.render('pages/admin/items', { items, error: null });
+  });
+
+  router.get('/items/menu', requireAdmin, (req, res) => {
+    const items = db.prepare(`
+      SELECT * FROM items
+      WHERE active = 1
+      ORDER BY sort_order ASC, name COLLATE NOCASE ASC
+    `).all();
+
+    const menuItems = items.map((item) => {
+      const rarity = normalizeRarity(item.rarity);
+      return {
+        ...item,
+        rarity,
+        rarityTokens: getRarityTokens(rarity)
+      };
+    });
+
+    const autoprint = req.query.autoprint === '1';
+    res.render('pages/admin/items-menu', { items: menuItems, autoprint, page: 'menu-print' });
   });
 
   router.post('/items', requireAdmin, (req, res) => {
