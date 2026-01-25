@@ -58,6 +58,11 @@ jobs:
       - name: Build client assets
         run: npm run build:client
 
+      - name: Build tray app
+        shell: pwsh
+        run: |
+          dotnet publish deploy/windows/tray/TheStorehouseTray.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist\tray
+
       - name: Package Windows staging folder
         shell: pwsh
         env:
@@ -74,6 +79,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path (Join-Path $stage 'node') | Out-Null
           New-Item -ItemType Directory -Force -Path (Join-Path $stage 'service') | Out-Null
           New-Item -ItemType Directory -Force -Path (Join-Path $stage 'scripts') | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $stage 'tray') | Out-Null
 
           Copy-Item src (Join-Path $stage 'app\src') -Recurse -Force
           Copy-Item node_modules (Join-Path $stage 'app\node_modules') -Recurse -Force
@@ -109,6 +115,10 @@ jobs:
           Copy-Item deploy\windows\scripts\* (Join-Path $stage 'scripts') -Recurse -Force
           Copy-Item deploy\windows\service\TheStorehouseService.xml (Join-Path $stage 'service') -Force
           Copy-Item deploy\windows\README-WINDOWS.md (Join-Path $stage 'README-WINDOWS.md') -Force
+
+          $traySrc = Join-Path $root 'dist\tray'
+          if (!(Test-Path $traySrc)) { throw "Missing tray build output: $traySrc" }
+          Copy-Item (Join-Path $traySrc '*') (Join-Path $stage 'tray') -Recurse -Force
 
           $nodeVersion = $env:NODE_VERSION
           $nodeZip = Join-Path $env:RUNNER_TEMP "node-$nodeVersion-win-x64.zip"

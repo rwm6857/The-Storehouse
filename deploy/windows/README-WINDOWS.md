@@ -19,6 +19,7 @@ The ZIP is built by the GitHub Actions workflow at `.github/workflows/windows-zi
    ```
 
 The service will start automatically on boot.
+The tray app will auto-start for all users and provides Start/Stop/Open/Quit.
 
 ## Open the app
 Run:
@@ -26,6 +27,22 @@ Run:
    C:\TheStorehouse\scripts\open-storehouse.bat
 ```
 This opens `http://localhost:3040` by default.
+
+## Tray app (system tray menu)
+The Windows package includes a small tray app at:
+```
+C:\TheStorehouse\tray\TheStorehouseTray.exe
+```
+The install script registers it to auto-start at login. Right-click the tray icon to:
+- Open the app (localhost)
+- Start/Stop the service
+- Quit (stops the service and exits the tray app)
+If Start/Stop prompts for elevation, accept the UAC prompt or run the tray app as Administrator.
+
+If you want to disable the tray app auto-start:
+```bat
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Run" /v "TheStorehouseTray" /f
+```
 
 ## Update
 1. Download the new ZIP and extract it (any folder is fine).

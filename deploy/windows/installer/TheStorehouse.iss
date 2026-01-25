@@ -37,8 +37,12 @@ Name: "firewall"; Description: "Add Windows Firewall rule for port 3040 (recomme
 [Icons]
 Name: "{group}\\Open The Storehouse"; Filename: "http://localhost:3040"
 
+[Registry]
+Root: HKLM; Subkey: "Software\\Microsoft\\Windows\\CurrentVersion\\Run"; ValueType: string; ValueName: "TheStorehouseTray"; ValueData: """{app}\\tray\\TheStorehouseTray.exe"""; Flags: uninsdeletevalue
+
 [Run]
 Filename: "http://localhost:3040"; Description: "Open The Storehouse"; Flags: postinstall nowait shellexec
+Filename: "{app}\\tray\\TheStorehouseTray.exe"; Description: "Start The Storehouse tray"; Flags: postinstall nowait skipifsilent
 
 [Code]
 const
@@ -206,10 +210,13 @@ begin
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ResultCode: Integer;
 begin
   if CurUninstallStep = usUninstall then begin
     StopAndUninstallService(ExpandConstant('{app}'));
     RemoveFirewallRuleIfNeeded();
+    Exec('taskkill', '/IM TheStorehouseTray.exe /F', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 
   if CurUninstallStep = usPostUninstall then begin

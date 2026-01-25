@@ -10,6 +10,7 @@ if %errorlevel% neq 0 (
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "ROOT_DIR=%%~fI"
 set "SERVICE_EXE=%ROOT_DIR%\service\TheStorehouseService.exe"
+set "TRAY_EXE=%ROOT_DIR%\tray\TheStorehouseTray.exe"
 
 if not exist "%SERVICE_EXE%" (
   if exist "%ROOT_DIR%\service\TheStorehouseService.exe.html" (
@@ -30,6 +31,13 @@ if %errorlevel% neq 0 (
 if %errorlevel% neq 0 (
   echo Service installed but failed to start.
   exit /b 1
+)
+
+if exist "%TRAY_EXE%" (
+  reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Run" /v "TheStorehouseTray" /t REG_SZ /d "\"%TRAY_EXE%\"" /f >nul 2>&1
+  start "" "%TRAY_EXE%"
+) else (
+  echo Tray app not found: %TRAY_EXE%
 )
 
 echo The Storehouse service is installed and running.
