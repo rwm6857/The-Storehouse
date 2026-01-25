@@ -391,7 +391,8 @@ internal sealed class TrayAppContext : ApplicationContext
     }
     catch
     {
-    return null;
+      return null;
+    }
   }
 
   private static Icon LoadIcon()
@@ -412,5 +413,4 @@ internal sealed class TrayAppContext : ApplicationContext
       return SystemIcons.Application;
     }
   }
-}
 }
