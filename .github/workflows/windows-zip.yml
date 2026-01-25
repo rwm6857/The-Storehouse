@@ -179,6 +179,27 @@ jobs:
           name: TheStorehouse-Setup
           path: dist\TheStorehouse-Setup.exe
 
+      - name: Clean up stale release assets
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assetName = 'Storehouse-win-x64.zip'
+          $assets = @()
+          try {
+            $assets = gh release view latest --json assets -q ".assets[].name"
+          } catch {
+            Write-Host "No latest release yet; skipping cleanup."
+            exit 0
+          }
+          if ($assets -contains $assetName) {
+            gh release delete-asset latest $assetName --yes
+            Write-Host "Deleted stale asset: $assetName"
+          } else {
+            Write-Host "No stale assets to delete."
+          }
+
       - name: Update latest tag
         if: github.ref == 'refs/heads/main'
         shell: bash
