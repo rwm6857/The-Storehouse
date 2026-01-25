@@ -157,7 +157,15 @@ jobs:
           if (Test-Path $versionFile) {
             $version = (Get-Content $versionFile -Raw).Trim()
           }
-          & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "deploy\windows\installer\TheStorehouse.iss" "/DAppVersion=$version"
+          $distDir = Join-Path (Resolve-Path .) 'dist'
+          if (!(Test-Path $distDir)) {
+            New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+          }
+          & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "deploy\windows\installer\TheStorehouse.iss" "/DAppVersion=$version" "/O$distDir" "/FTheStorehouse-Setup"
+          $installerPath = Join-Path $distDir 'TheStorehouse-Setup.exe'
+          if (!(Test-Path $installerPath)) {
+            throw "Installer build did not produce $installerPath"
+          }
 
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
