@@ -66,7 +66,7 @@ internal sealed class TrayAppContext : ApplicationContext
 
     _trayIcon = new NotifyIcon
     {
-      Icon = SystemIcons.Application,
+      Icon = LoadIcon(),
       Text = AppName,
       Visible = true,
       ContextMenuStrip = menu
@@ -391,7 +391,26 @@ internal sealed class TrayAppContext : ApplicationContext
     }
     catch
     {
-      return null;
+    return null;
+  }
+
+  private static Icon LoadIcon()
+  {
+    try
+    {
+      var asm = typeof(TrayAppContext).Assembly;
+      var name = "TheStorehouseTray.assets.TheStorehouse.ico";
+      using var stream = asm.GetManifestResourceStream(name);
+      if (stream == null)
+      {
+        return SystemIcons.Application;
+      }
+      return new Icon(stream);
+    }
+    catch
+    {
+      return SystemIcons.Application;
     }
   }
+}
 }

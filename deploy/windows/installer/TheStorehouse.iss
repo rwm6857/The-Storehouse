@@ -58,14 +58,54 @@ begin
   Result := 'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{{0D808AA6-A082-4465-9FDE-DB3BF68623D8}}_is1';
 end;
 
+function RegKeyExistsAny(SubKey: string): Boolean;
+begin
+  Result := RegKeyExists(HKLM, SubKey);
+  if (not Result) and IsWin64 then begin
+    Result := RegKeyExists(HKLM64, SubKey);
+  end;
+end;
+
+function RegQueryStringValueAny(SubKey, ValueName: string; var Value: string): Boolean;
+begin
+  Result := RegQueryStringValue(HKLM, SubKey, ValueName, Value);
+  if (not Result) and IsWin64 then begin
+    Result := RegQueryStringValue(HKLM64, SubKey, ValueName, Value);
+  end;
+end;
+
+function RegQueryDWordValueAny(SubKey, ValueName: string; var Value: Cardinal): Boolean;
+begin
+  Result := RegQueryDWordValue(HKLM, SubKey, ValueName, Value);
+  if (not Result) and IsWin64 then begin
+    Result := RegQueryDWordValue(HKLM64, SubKey, ValueName, Value);
+  end;
+end;
+
+procedure RegWriteDWordValueAny(SubKey, ValueName: string; Value: Cardinal);
+begin
+  RegWriteDWordValue(HKLM, SubKey, ValueName, Value);
+  if IsWin64 then begin
+    RegWriteDWordValue(HKLM64, SubKey, ValueName, Value);
+  end;
+end;
+
+procedure RegDeleteValueAny(SubKey, ValueName: string);
+begin
+  RegDeleteValue(HKLM, SubKey, ValueName);
+  if IsWin64 then begin
+    RegDeleteValue(HKLM64, SubKey, ValueName);
+  end;
+end;
+
 function IsAppInstalled(): Boolean;
 begin
-  Result := RegKeyExists(HKLM, GetUninstallKey());
+  Result := RegKeyExistsAny(GetUninstallKey());
 end;
 
 function GetUninstallString(): string;
 begin
-  if not RegQueryStringValue(HKLM, GetUninstallKey(), 'UninstallString', Result) then begin
+  if not RegQueryStringValueAny(GetUninstallKey(), 'UninstallString', Result) then begin
     Result := '';
   end;
 end;
@@ -165,7 +205,7 @@ begin
         ResultCode
       );
       if ResultCode = 0 then begin
-        RegWriteDWordValue(HKLM, FirewallRegKey, 'FirewallRuleAdded', 1);
+        RegWriteDWordValueAny(FirewallRegKey, 'FirewallRuleAdded', 1);
       end;
     end;
   end;
@@ -176,7 +216,7 @@ var
   ResultCode: Integer;
   Added: Cardinal;
 begin
-  if RegQueryDWordValue(HKLM, FirewallRegKey, 'FirewallRuleAdded', Added) and (Added = 1) then begin
+  if RegQueryDWordValueAny(FirewallRegKey, 'FirewallRuleAdded', Added) and (Added = 1) then begin
     Exec('netsh',
       'advfirewall firewall delete rule name="' + FirewallRuleName + '"',
       '',
@@ -223,6 +263,6 @@ begin
     if Assigned(RemoveDataCheckBox) and RemoveDataCheckBox.Checked then begin
       DelTree(ExpandConstant('{commonappdata}\\The Storehouse'), True, True, True);
     end;
-    RegDeleteValue(HKLM, FirewallRegKey, 'FirewallRuleAdded');
+    RegDeleteValueAny(FirewallRegKey, 'FirewallRuleAdded');
   end;
 end;
